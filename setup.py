@@ -21,7 +21,7 @@ setup(
         'pytest',
         'psutil',
         'scipy',
-        'sklearn',
+        'scikit-learn',
         'imageio',
         'seaborn==0.8.1',
         'tensorflow<=1.16.0',
