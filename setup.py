@@ -28,7 +28,8 @@ setup(
         'setuptools',
         'treelib',
         'gizeh',
-        'tqdm'
+        'tqdm',
+        'protobuf==3.20.*'
     ],
     description="Teacher algorithms for curriculum learning of Deep RL in continuously parameterized environments",
     author="Rémy Portelas",
