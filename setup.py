@@ -12,7 +12,7 @@ setup(
     version="0.1",
     install_requires=[
         'cloudpickle==1.2.0',
-        'gym[atari,box2d,classic_control]>=0.10.8',
+        'gym[atari,box2d,classic_control]==0.10.8',
         'ipython',
         'joblib',
         'matplotlib',
