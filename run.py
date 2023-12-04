@@ -8,6 +8,8 @@ from teachDRL.teachers.teacher_controller import TeacherController
 from collections import OrderedDict
 import os
 import numpy as np
+from my_scripts.env_creator_for_TDRL import main
+import yaml
 
 # Argument definition
 parser = argparse.ArgumentParser()
@@ -50,6 +52,11 @@ parser.add_argument('--step_h', type=float, default=None)
 parser.add_argument('--step_nb', type=float, default=None)
 parser.add_argument('--hexa_shape', '-hexa', action='store_true')
 parser.add_argument('--stump_seq', '-seq', action='store_true')
+
+# Reward coefficient arguments:
+parser.add_argument('--nb_reward_coeff', type=int, default=None)
+parser.add_argument('--init_reward_coeff_mode', type=str, default="target")  # choose walker type ("target" or "random")
+
 
 # Teacher-specific arguments:
 parser.add_argument('--teacher', type=str, default="ALP-GMM")  # ALP-GMM, Covar-GMM, RIAC, Oracle, Random
@@ -97,6 +104,8 @@ if args.hexa_shape:
     param_env_bounds['poly_shape'] = [0, 4.0, 12]
 if args.stump_seq:
     param_env_bounds['stump_seq'] = [0, 6.0, 10]
+if args.nb_reward_coeff is not None:
+    param_env_bounds['reward_coefficients'] = [0, 1.0, args.nb_reward_coeff]
 
 # Set Teacher hyperparameters
 params = {}
@@ -133,13 +142,17 @@ elif args.teacher == "Oracle":
         print('Oracle not defined for this parameter space')
         exit(1)
 
-env_f = lambda: gym.make(args.env)
-env_init = {}
-env_init['leg_size'] = args.leg_size
-
+if args.env != "air_hockey":
+    env_f = lambda: gym.make(args.env)
+    env_init = {}
+    env_init['leg_size'] = args.leg_size
+else:
+    env_f = main(seed=args.seed)
+    env_init = {}
+    env_init['init_reward_coeff_mode'] = args.init_reward_coeff_mode
 
 # Initialize teacher
-Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bounds,
+Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bounds, args.env,
                             seed=args.seed, teacher_params=params)
 
 # Launch Student training

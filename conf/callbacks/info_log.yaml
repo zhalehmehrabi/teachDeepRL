@@ -1,0 +1,8 @@
+info_log:
+  log_freq: 1
+  info_keywords:
+    - joint_pos_constr
+    - joint_vel_constr
+    - ee_constr
+    #- link_constr
+    #- constr_reward

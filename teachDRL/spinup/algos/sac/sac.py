@@ -132,7 +132,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     logger = EpochLogger(**logger_kwargs)
     hyperparams = locals()
     if Teacher: del hyperparams['Teacher']  # remove teacher to avoid serialization error
-    logger.save_config(hyperparams)
+    # logger.save_config(hyperparams) #TODO
 
     tf.set_random_seed(seed)
     np.random.seed(seed)
@@ -141,16 +141,16 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
 
     # initialize environment (choose between short, default or quadrupedal walker)
     if len(env_init.items()) > 0:
-        env.env.my_init(env_init)
-        test_env.env.my_init(env_init)
+        env.wrapped_env.my_init(env_init)
+        test_env.wrapped_env.my_init(env_init)
 
 
     if Teacher: Teacher.set_env_params(env)
     env.reset()
 
-    obs_dim = env.env.observation_space.shape[0]
+    obs_dim = env.observation_space.shape[0]
     print(obs_dim)
-    act_dim = env.env.action_space.shape[0]
+    act_dim = env.action_space.shape[0]
 
     # Action limit for clamping: critically, assumes all dimensions share the same bound!
     act_limit = env.action_space.high[0]
@@ -261,7 +261,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         if t > start_steps:
             a = get_action(o)
         else:
-            a = env.env.action_space.sample()
+            a = env.action_space.sample()
 
         # Step the env
 

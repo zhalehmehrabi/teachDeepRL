@@ -1,0 +1,17 @@
+env: 7dof-defend
+shaped_reward: True
+large_reward: 20000
+large_penalty: 300
+alpha_r: 0
+c_r: 0
+history: 0
+stop_after_hit: True
+whole_game_reward: False
+load_second_agent: False
+dont_include_timer_in_states: True
+action_persistence: 5
+stop_when_puck_otherside: False
+start_from_defend: True
+start_curriculum_transition: 10
+end_curriculum_transition: 10
+curriculum_transition: False

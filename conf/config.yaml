@@ -1,0 +1,19 @@
+hydra.output_subdir: null
+learn:
+  total_timesteps: 5000000
+seed: 42
+log_dir: '/data/air_hockey/amir/logs'
+log_interval: 10 # log statistics every n episodes
+label: sde_alpha100
+defaults:
+  - callbacks:
+      - custom_eval
+      - checkpoint
+      - info_log
+  - algorithm:
+      sac
+  - environment:
+      air_hockey
+  - teacher:
+      ALP-GMM
+

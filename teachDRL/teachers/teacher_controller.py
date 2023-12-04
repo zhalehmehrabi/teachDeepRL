@@ -33,13 +33,13 @@ def param_dict_to_param_vec(param_env_bounds, param_dict):  # needs param_env_bo
 
 
 class TeacherController(object):
-    def __init__(self, teacher, nb_test_episodes, param_env_bounds, seed=None, teacher_params={}):
+    def __init__(self, teacher, nb_test_episodes, param_env_bounds, env_name, seed=None, teacher_params={}):
         self.teacher = teacher
         self.nb_test_episodes = nb_test_episodes
         self.test_ep_counter = 0
         self.eps= 1e-03
         self.param_env_bounds = copy.deepcopy(param_env_bounds)
-
+        self.env_name = env_name
         # figure out parameters boundaries vectors
         mins, maxs = [], []
         for name, bounds in param_env_bounds.items():
@@ -68,11 +68,12 @@ class TeacherController(object):
             print('Unknown teacher')
             raise NotImplementedError
 
-        self.test_mode = "fixed_set"
-        if self.test_mode == "fixed_set":
-            name = get_test_set_name(self.param_env_bounds)
-            self.test_env_list = pickle.load( open("teachDRL/teachers/test_sets/"+name+".pkl", "rb" ) )
-            print('fixed set of {} tasks loaded: {}'.format(len(self.test_env_list),name))
+        if self.env_name != "air_hockey":
+            self.test_mode = "fixed_set"
+            if self.test_mode == "fixed_set":
+                name = get_test_set_name(self.param_env_bounds)
+                self.test_env_list = pickle.load( open("teachDRL/teachers/test_sets/"+name+".pkl", "rb" ) )
+                print('fixed set of {} tasks loaded: {}'.format(len(self.test_env_list),name))
 
         #data recording
         self.env_params_train = []
@@ -114,7 +115,7 @@ class TeacherController(object):
         assert type(params[0]) == np.float32
         self.env_params_train.append(params)
         param_dict = param_vec_to_param_dict(self.param_env_bounds, params)
-        env.env.set_environment(**param_dict)
+        env.wrapped_env.set_environment(**param_dict)
         return params
 
     def set_test_env_params(self, test_env):

@@ -1,0 +1,13 @@
+env: hrl
+steps_per_action: 15
+include_timer: true
+scale_obs: true
+alpha_r: 0.0
+large_reward: 1000
+fault_penalty: 1000
+fault_risk_penalty: 0
+policies:
+  - repel_oac
+  - home_sb3
+  - hit_rb
+  - prepare_rb

@@ -1,0 +1,21 @@
+alg: sac
+policy: MlpPolicy
+learning_rate: 0.001
+buffer_size: 1000000
+learning_starts: 1000
+batch_size: 256
+tau: 0.005
+gamma: 0.997
+train_freq: [1, 'step'] # steps of the vectorized environment. Actual steps is train_freq * n_envs
+gradient_steps: 1
+optimize_memory_usage: false
+ent_coef: auto
+target_update_interval: 1
+target_entropy: auto
+use_sde: true
+sde_sample_freq: -1
+stats_window_size: 100
+tensorboard_log: "./"
+verbose: 1
+device: auto
+_init_setup_model: true

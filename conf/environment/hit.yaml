@@ -1,0 +1,11 @@
+env: hit
+scale_obs: true
+scale_action: false
+alpha_r: 100.0
+hit_coeff: 1000
+include_ee: true
+include_ee_vel: true
+include_joints: true
+include_puck: true
+remove_last_joint: false
+max_path_len: 400
