@@ -43,6 +43,8 @@ class TeacherController(object):
         # figure out parameters boundaries vectors
         mins, maxs = [], []
         for name, bounds in param_env_bounds.items():
+            if "component" in name:
+                continue
             if len(bounds) == 2:
                 mins.append(bounds[0])
                 maxs.append(bounds[1])

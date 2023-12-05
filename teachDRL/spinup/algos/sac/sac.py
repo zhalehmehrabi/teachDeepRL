@@ -132,7 +132,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     logger = EpochLogger(**logger_kwargs)
     hyperparams = locals()
     if Teacher: del hyperparams['Teacher']  # remove teacher to avoid serialization error
-    logger.save_config(hyperparams)
+    #logger.save_config(hyperparams) #TODO
 
     tf.set_random_seed(seed)
     np.random.seed(seed)

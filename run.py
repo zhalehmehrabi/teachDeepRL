@@ -56,7 +56,7 @@ parser.add_argument('--stump_seq', '-seq', action='store_true')
 # Reward coefficient arguments:
 parser.add_argument('--nb_reward_coeff', type=int, default=None)
 parser.add_argument('--init_reward_coeff_mode', type=str, default="target")  # choose walker type ("target" or "random")
-
+# for now the reward components are [touch the puck, x-speed of the puck, y-speed of the puck, target] # TODO
 
 # Teacher-specific arguments:
 parser.add_argument('--teacher', type=str, default="ALP-GMM")  # ALP-GMM, Covar-GMM, RIAC, Oracle, Random
@@ -106,7 +106,6 @@ if args.stump_seq:
     param_env_bounds['stump_seq'] = [0, 6.0, 10]
 if args.nb_reward_coeff is not None:
     param_env_bounds['reward_coefficients'] = [0, 1.0, args.nb_reward_coeff]
-
 # Set Teacher hyperparameters
 params = {}
 if args.teacher == 'ALP-GMM':
