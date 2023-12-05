@@ -34,7 +34,9 @@ setup(
         'osqp>=0.6.2.post8',
         'nlopt>=2.7.1',
         'torch',
-        'mushroom-rl==1.9.2'
+        'mushroom-rl==1.9.2',
+        'hydra-core',
+        'gymnasium'
     ],
     description="Teacher algorithms for curriculum learning of Deep RL in continuously parameterized environments",
     author="Rémy Portelas",
