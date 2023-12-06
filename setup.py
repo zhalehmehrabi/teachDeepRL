@@ -24,7 +24,7 @@ setup(
         'scikit-learn',
         'imageio',
         'seaborn==0.8.1',
-        'tensorflow<=1.16.0',
+        # 'tensorflow<=1.16.0',
         'setuptools',
         'treelib',
         'gizeh',
@@ -36,7 +36,8 @@ setup(
         'torch',
         'mushroom-rl==1.9.2',
         'hydra-core',
-        'gymnasium'
+        'gymnasium',
+        'stable-baselines3[extra]'
     ],
     description="Teacher algorithms for curriculum learning of Deep RL in continuously parameterized environments",
     author="Rémy Portelas",

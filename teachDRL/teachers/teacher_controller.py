@@ -113,13 +113,12 @@ class TeacherController(object):
             pickle.dump(dump_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-    def set_env_params(self, env):
+    def set_env_params(self):
         params = copy.copy(self.task_generator.sample_task())
         assert type(params[0]) == np.float32
         self.env_params_train.append(params)
         param_dict = param_vec_to_param_dict(self.param_env_bounds, params)
-        env.wrapped_env.set_environment(**param_dict)
-        return params
+        return param_dict
 
     def set_test_env_params(self, test_env):
         self.test_ep_counter += 1

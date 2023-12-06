@@ -1,15 +1,24 @@
 hydra.output_subdir: null
 learn:
-  total_timesteps: 5000000
+  total_timesteps: 50000000
 seed: 42
 log_dir: '/data/air_hockey/amir/logs'
 log_interval: 10 # log statistics every n episodes
-label: sde_alpha100
+exp_name: sde_alpha100
+nb_reward_coeff: 4
+init_reward_coeff_mode: 'target'
+parallel: 20
+epochs: 100
+max_episode_len: 500
+steps_per_epoch: 50000  
+nb_test_episodes: 50
+env: air_hockey
 defaults:
   - callbacks:
       - custom_eval
       - checkpoint
       - info_log
+      - teacher
   - algorithm:
       sac
   - environment:
