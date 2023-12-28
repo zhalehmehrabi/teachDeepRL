@@ -105,4 +105,10 @@ def mlp_actor_critic(x, a, hidden_sizes=(400,300), activation=tf.nn.relu,
         q2_pi = vf_mlp(tf.concat([x,pi], axis=-1))
     with tf.variable_scope('v'):
         v = vf_mlp(x)
-    return mu, pi, logp_pi, q1, q2, q1_pi, q2_pi, v
+    with tf.variable_scope('d_log_p'):
+        with tf.GradientTape(persistent=True) as tape:
+            tape.watch(x)
+            mu, pi, logp_pi = policy(x, a, hidden_sizes, activation, output_activation)
+        d_log_p = tape.gradient(logp_pi, x)
+
+    return mu, pi, logp_pi, q1, q2, q1_pi, q2_pi, v, d_log_p

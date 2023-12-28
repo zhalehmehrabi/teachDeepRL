@@ -40,16 +40,17 @@ parser.add_argument('--leg_size', type=str, default="default")  # choose walker 
 # Selection of parameter space
 # So far 3 choices: "--max_stump_h 3.0 --max_obstacle_spacing 6.0" (aka Stump Tracks) or "-hexa" (aka Hexagon Tracks)
 # or "-seq" (untested experimental env)
-parser.add_argument('--max_stump_h', type=float, default=None)
-parser.add_argument('--max_stump_w', type=float, default=None)
-parser.add_argument('--max_stump_r', type=float, default=None)
+parser.add_argument('--stump_height', type=float, default=None)
+parser.add_argument('--stump_width', type=float, default=None)
+parser.add_argument('--stump_rot', type=float, default=None)
 parser.add_argument('--roughness', type=float, default=None)
-parser.add_argument('--max_obstacle_spacing', type=float, default=None)
+parser.add_argument('--obstacle_spacing', type=float, default=None)
 parser.add_argument('--max_gap_w', type=float, default=None)
 parser.add_argument('--step_h', type=float, default=None)
 parser.add_argument('--step_nb', type=float, default=None)
 parser.add_argument('--hexa_shape', '-hexa', action='store_true')
 parser.add_argument('--stump_seq', '-seq', action='store_true')
+parser.add_argument('--shaped_reward', action='store_true')
 
 # Teacher-specific arguments:
 parser.add_argument('--teacher', type=str, default="ALP-GMM")  # ALP-GMM, Covar-GMM, RIAC, Oracle, Random
@@ -85,22 +86,27 @@ if args.hid != -1:
 
 # Set bounds for environment's parameter space format:[min, max, nb_dimensions] (if no nb_dimensions, assumes only 1)
 param_env_bounds = OrderedDict()
-if args.max_stump_h is not None:
-    param_env_bounds['stump_height'] = [0, args.max_stump_h]
-if args.max_stump_w is not None:
-    param_env_bounds['stump_width'] = [0, args.max_stump_w]
-if args.max_stump_r is not None:
-    param_env_bounds['stump_rot'] = [0, args.max_stump_r]
-if args.max_obstacle_spacing is not None:
-    param_env_bounds['obstacle_spacing'] = [0, args.max_obstacle_spacing]
-if args.hexa_shape:
-    param_env_bounds['poly_shape'] = [0, 4.0, 12]
-if args.stump_seq:
-    param_env_bounds['stump_seq'] = [0, 6.0, 10]
+if not args.shaped_reward:
+    if args.max_stump_h is not None:
+        param_env_bounds['stump_height'] = [0, args.max_stump_h]
+    if args.max_stump_w is not None:
+        param_env_bounds['stump_width'] = [0, args.max_stump_w]
+    if args.max_stump_r is not None:
+        param_env_bounds['stump_rot'] = [0, args.max_stump_r]
+    if args.max_obstacle_spacing is not None:
+        param_env_bounds['obstacle_spacing'] = [0, args.max_obstacle_spacing]
+    if args.hexa_shape:
+        param_env_bounds['poly_shape'] = [0, 4.0, 12]
+    if args.stump_seq:
+        param_env_bounds['stump_seq'] = [0, 6.0, 10]
+else:
+    param_env_bounds['C'] = [0, 1, 6]
+
+
 
 # Set Teacher hyperparameters
 params = {}
-if args.teacher == 'ALP-GMM':
+if args.teacher == 'ALP-GMM' or args.teacher == "ALP-Learning-GMM":
     if args.gmm_fitness_fun is not None:
         params['gmm_fitness_fun'] = args.gmm_fitness_fun
     if args.min_k is not None and args.max_k is not None:
@@ -132,10 +138,22 @@ elif args.teacher == "Oracle":
     else:
         print('Oracle not defined for this parameter space')
         exit(1)
-
 env_f = lambda: gym.make(args.env)
 env_init = {}
 env_init['leg_size'] = args.leg_size
+env_init['roughness'] = args.roughness if args.roughness else 0
+env_init['obstacle_spacing'] = max(0.01, args.obstacle_spacing) if args.obstacle_spacing is not None else 8.0
+env_init['stump_height'] = [args.stump_height, 0.1] if args.stump_height is not None else None
+env_init['stump_width'] = args.stump_width
+env_init['stump_rot'] = args.stump_rot
+env_init['hexa_shape'] = args.hexa_shape
+env_init['poly_shape'] = [0, 4.0, 12] if args.hexa_shape else None
+env_init['stump_seq'] = [0, 6.0, 10] if args.stump_seq else None
+
+# if env_init['poly_shape']  is not None:
+#     env_init['hexa_shape'] = np.interp(env_init['poly_shape'], [0, 4], [0, 4]).tolist()
+#     assert (len(env_init['poly_shape']) == 12)
+#     env_init['hexa_shape'] = env_init['hexa_shape'][0:12]
 
 
 # Initialize teacher

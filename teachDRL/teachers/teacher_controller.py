@@ -3,33 +3,63 @@ import pickle
 import copy
 from teachDRL.teachers.algos.riac import RIAC
 from teachDRL.teachers.algos.alp_gmm import ALPGMM
+from teachDRL.teachers.algos.alp_learning_gmm import ALPLearningGMM
 from teachDRL.teachers.algos.covar_gmm import CovarGMM
 from teachDRL.teachers.algos.random_teacher import RandomTeacher
 from teachDRL.teachers.algos.oracle_teacher import OracleTeacher
 from teachDRL.teachers.utils.test_utils import get_test_set_name
 from collections import OrderedDict
 
+
+class CDataset:
+    """
+    A simple FIFO experience buffer for teacher.
+
+    C_buf is used to store the values of coefficients.
+
+    Value_buf is used to store a list which the first element is the reward feature S, and the second element is the
+    S * gradient of log probability of policy
+
+    W_buf is used to store the values of weights which will be caluculated for soft argmin.
+    """
+
+    def __init__(self, C_dim, size):
+        self.C_buf = np.zeros([size, C_dim], dtype=np.float32)
+        self.Values_buf = [([], []) for _ in range(size)]
+        self.W_buf = np.zeros(size, dtype=np.float32)
+        self.ptr, self.size, self.max_size = 0, 0, size
+
+    def store(self, C, S, S_multiple_grad_log_p):
+        self.C_buf[self.ptr] = C
+        self.Values_buf[self.ptr] = (S, S_multiple_grad_log_p)
+        self.W_buf[self.ptr] = None
+        self.ptr = (self.ptr + 1) % self.max_size
+        self.size = min(self.size + 1, self.max_size)
+
+    def CalculateSoftArgMin(self, newC):
+        print("calculations")
+
 def param_vec_to_param_dict(param_env_bounds, param):
     param_dict = OrderedDict()
     cpt = 0
-    for i,(name, bounds) in enumerate(param_env_bounds.items()):
+    for i, (name, bounds) in enumerate(param_env_bounds.items()):
         if len(bounds) == 2:
             param_dict[name] = param[i]
             cpt += 1
         elif len(bounds) == 3:  # third value is the number of dimensions having these bounds
             nb_dims = bounds[2]
-            param_dict[name] = param[i:i+nb_dims]
+            param_dict[name] = param[i:i + nb_dims]
             cpt += nb_dims
-    #print('reconstructed param vector {}\n into {}'.format(param, param_dict)) #todo remove
+    # print('reconstructed param vector {}\n into {}'.format(param, param_dict)) #todo remove
     return param_dict
+
 
 def param_dict_to_param_vec(param_env_bounds, param_dict):  # needs param_env_bounds for order reference
     param_vec = []
     for name, bounds in param_env_bounds.items():
-        #print(param_dict[name])
+        # print(param_dict[name])
         param_vec.append(param_dict[name])
     return np.array(param_vec, dtype=np.float32)
-
 
 
 class TeacherController(object):
@@ -37,7 +67,7 @@ class TeacherController(object):
         self.teacher = teacher
         self.nb_test_episodes = nb_test_episodes
         self.test_ep_counter = 0
-        self.eps= 1e-03
+        self.eps = 1e-03
         self.param_env_bounds = copy.deepcopy(param_env_bounds)
 
         # figure out parameters boundaries vectors
@@ -62,19 +92,21 @@ class TeacherController(object):
             self.task_generator = RIAC(mins, maxs, seed=seed, params=teacher_params)
         elif teacher == 'ALP-GMM':
             self.task_generator = ALPGMM(mins, maxs, seed=seed, params=teacher_params)
+        elif teacher == 'ALP-Learning-GMM':
+            self.task_generator = ALPLearningGMM(mins, maxs, seed=seed, params=teacher_params)
         elif teacher == 'Covar-GMM':
             self.task_generator = CovarGMM(mins, maxs, seed=seed, params=teacher_params)
         else:
             print('Unknown teacher')
             raise NotImplementedError
 
-        self.test_mode = "fixed_set"
+        self.test_mode = "Shaped"
         if self.test_mode == "fixed_set":
             name = get_test_set_name(self.param_env_bounds)
-            self.test_env_list = pickle.load( open("teachDRL/teachers/test_sets/"+name+".pkl", "rb" ) )
-            print('fixed set of {} tasks loaded: {}'.format(len(self.test_env_list),name))
+            self.test_env_list = pickle.load(open("teachDRL/teachers/test_sets/" + name + ".pkl", "rb"))
+            print('fixed set of {} tasks loaded: {}'.format(len(self.test_env_list), name))
 
-        #data recording
+        # data recording
         self.env_params_train = []
         self.env_train_rewards = []
         self.env_train_norm_rewards = []
@@ -83,6 +115,9 @@ class TeacherController(object):
         self.env_params_test = []
         self.env_test_rewards = []
         self.env_test_len = []
+
+
+
 
     def record_train_episode(self, reward, ep_len):
         self.env_train_rewards.append(reward)
@@ -96,6 +131,9 @@ class TeacherController(object):
         self.env_test_rewards.append(reward)
         self.env_test_len.append(ep_len)
 
+    def record_gradiend_components(self, C, S, Grad):
+        self.teacher.append_Dataset(C, S, Grad)
+
     def dump(self, filename):
         with open(filename, 'wb') as handle:
             dump_dict = {'env_params_train': self.env_params_train,
@@ -108,7 +146,6 @@ class TeacherController(object):
             dump_dict = self.task_generator.dump(dump_dict)
             pickle.dump(dump_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-
     def set_env_params(self, env):
         params = copy.copy(self.task_generator.sample_task())
         assert type(params[0]) == np.float32
@@ -120,7 +157,7 @@ class TeacherController(object):
     def set_test_env_params(self, test_env):
         self.test_ep_counter += 1
         if self.test_mode == "fixed_set":
-            test_param_dict = self.test_env_list[self.test_ep_counter-1]
+            test_param_dict = self.test_env_list[self.test_ep_counter - 1]
 
             # removing legacy parameters from test_set, don't pay attention
             legacy = ['tunnel_height', 'gap_width', 'step_height', 'step_number']
@@ -131,12 +168,15 @@ class TeacherController(object):
         else:
             raise NotImplementedError
 
-        #print('test param dict is: {}'.format(test_param_dict))
+        # print('test param dict is: {}'.format(test_param_dict))
         test_param_vec = param_dict_to_param_vec(self.param_env_bounds, test_param_dict)
-        #print('test param vector is: {}'.format(test_param_vec))
+        # print('test param vector is: {}'.format(test_param_vec))
 
         self.env_params_test.append(test_param_vec)
         test_env.env.set_environment(**test_param_dict)
 
         if self.test_ep_counter == self.nb_test_episodes:
             self.test_ep_counter = 0
+
+    def record_grads(self, C, S, s_multiplied_grad_log_p_pi):
+        self.task_generator.dataset_alps.store(C, S, s_multiplied_grad_log_p_pi)

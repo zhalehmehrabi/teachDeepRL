@@ -5,6 +5,7 @@ from teachDRL.spinup.algos.sac import core
 from teachDRL.spinup.algos.sac.core import get_vars
 from teachDRL.spinup.utils.logx import EpochLogger
 
+
 class ReplayBuffer:
     """
     A simple FIFO experience replay buffer for SAC agents.
@@ -24,8 +25,8 @@ class ReplayBuffer:
         self.acts_buf[self.ptr] = act
         self.rews_buf[self.ptr] = rew
         self.done_buf[self.ptr] = done
-        self.ptr = (self.ptr+1) % self.max_size
-        self.size = min(self.size+1, self.max_size)
+        self.ptr = (self.ptr + 1) % self.max_size
+        self.size = min(self.size + 1, self.max_size)
 
     def sample_batch(self, batch_size=32):
         idxs = np.random.randint(0, self.size, size=batch_size)
@@ -35,6 +36,7 @@ class ReplayBuffer:
                     rews=self.rews_buf[idxs],
                     done=self.done_buf[idxs])
 
+
 """
 
 Soft Actor-Critic
@@ -42,11 +44,13 @@ Soft Actor-Critic
 (With slight variations that bring it closer to TD3)
 
 """
+
+
 def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         steps_per_epoch=200000, epochs=100, replay_size=int(1e6), gamma=0.99,
         polyak=0.995, lr=1e-3, alpha=0.005, batch_size=1000, start_steps=10000,
         max_ep_len=2000, logger_kwargs=dict(), save_freq=1, env_init=dict(),
-        env_name='unknown', nb_test_episodes=50, train_freq=10, Teacher=None):
+        env_name='unknown', nb_test_episodes=50, train_freq=10, nb_average_out=50, Teacher=None):
     """
 
     Args:
@@ -128,11 +132,10 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
 
     """
 
-
     logger = EpochLogger(**logger_kwargs)
     hyperparams = locals()
     if Teacher: del hyperparams['Teacher']  # remove teacher to avoid serialization error
-    logger.save_config(hyperparams)
+    # logger.save_config(hyperparams) #TODO, have to uncomment
 
     tf.set_random_seed(seed)
     np.random.seed(seed)
@@ -143,7 +146,6 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     if len(env_init.items()) > 0:
         env.env.my_init(env_init)
         test_env.env.my_init(env_init)
-
 
     if Teacher: Teacher.set_env_params(env)
     env.reset()
@@ -163,34 +165,33 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
 
     # Main outputs from computation graph
     with tf.variable_scope('main'):
-        mu, pi, logp_pi, q1, q2, q1_pi, q2_pi, v = actor_critic(x_ph, a_ph, **ac_kwargs)
-    
+        mu, pi, logp_pi, q1, q2, q1_pi, q2_pi, v, d_log_p = actor_critic(x_ph, a_ph, **ac_kwargs)
+
     # Target value network
     with tf.variable_scope('target'):
-        _, _, _, _, _, _, _, v_targ  = actor_critic(x2_ph, a_ph, **ac_kwargs)
-
+        _, _, _, _, _, _, _, v_targ, _ = actor_critic(x2_ph, a_ph, **ac_kwargs)
 
     # Experience buffer
     replay_buffer = ReplayBuffer(obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
 
     # Count variables
-    var_counts = tuple(core.count_vars(scope) for scope in 
+    var_counts = tuple(core.count_vars(scope) for scope in
                        ['main/pi', 'main/q1', 'main/q2', 'main/v', 'main'])
     print(('\nNumber of parameters: \t pi: %d, \t' + \
-           'q1: %d, \t q2: %d, \t v: %d, \t total: %d\n')%var_counts)
+           'q1: %d, \t q2: %d, \t v: %d, \t total: %d\n') % var_counts)
 
     # Min Double-Q:
     min_q_pi = tf.minimum(q1_pi, q2_pi)
 
     # Targets for Q and V regression
-    q_backup = tf.stop_gradient(r_ph + gamma*(1-d_ph)*v_targ)
+    q_backup = tf.stop_gradient(r_ph + gamma * (1 - d_ph) * v_targ)
     v_backup = tf.stop_gradient(min_q_pi - alpha * logp_pi)
 
     # Soft actor-critic losses
     pi_loss = tf.reduce_mean(alpha * logp_pi - q1_pi)
-    q1_loss = 0.5 * tf.reduce_mean((q_backup - q1)**2)
-    q2_loss = 0.5 * tf.reduce_mean((q_backup - q2)**2)
-    v_loss = 0.5 * tf.reduce_mean((v_backup - v)**2)
+    q1_loss = 0.5 * tf.reduce_mean((q_backup - q1) ** 2)
+    q2_loss = 0.5 * tf.reduce_mean((q_backup - q2) ** 2)
+    v_loss = 0.5 * tf.reduce_mean((v_backup - v) ** 2)
     value_loss = q1_loss + q2_loss + v_loss
 
     # Policy train op 
@@ -208,16 +209,16 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     # Polyak averaging for target variables
     # (control flow because sess.run otherwise evaluates in nondeterministic order)
     with tf.control_dependencies([train_value_op]):
-        target_update = tf.group([tf.assign(v_targ, polyak*v_targ + (1-polyak)*v_main)
+        target_update = tf.group([tf.assign(v_targ, polyak * v_targ + (1 - polyak) * v_main)
                                   for v_main, v_targ in zip(get_vars('main'), get_vars('target'))])
 
     # All ops to call during one training step
-    step_ops = [pi_loss, q1_loss, q2_loss, v_loss, q1, q2, v, logp_pi, 
+    step_ops = [pi_loss, q1_loss, q2_loss, v_loss, q1, q2, v, logp_pi,
                 train_pi_op, train_value_op, target_update]
 
     # Initializing targets to match main variables
     target_init = tf.group([tf.assign(v_targ, v_main)
-                              for v_main, v_targ in zip(get_vars('main'), get_vars('target'))])
+                            for v_main, v_targ in zip(get_vars('main'), get_vars('target'))])
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -225,27 +226,62 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     sess.run(tf.global_variables_initializer())
     sess.run(target_init)
 
-
     # Setup model saving
-    logger.setup_tf_saver(sess, inputs={'x': x_ph, 'a': a_ph}, 
-                                outputs={'mu': mu, 'pi': pi, 'q1': q1, 'q2': q2, 'v': v})
+    logger.setup_tf_saver(sess, inputs={'x': x_ph, 'a': a_ph},
+                          outputs={'mu': mu, 'pi': pi, 'q1': q1, 'q2': q2, 'v': v})
 
     def get_action(o, deterministic=False):
         act_op = mu if deterministic else pi
-        return sess.run(act_op, feed_dict={x_ph: o.reshape(1,-1)})[0]
+        return sess.run(act_op, feed_dict={x_ph: o.reshape(1, -1)})[0]
 
+    def get_d_log_p_pi(o, a):
+        act_op = d_log_p
+        return sess.run(act_op, feed_dict={x_ph: o.reshape(1, -1), a_ph: a.reshape(1, -1)})[0]
+
+    # TODO test the agent is two parts, one the same as bellow but just with C*, the other one must be written in a way that we can calculate the derivative of log of policy wrt C
     def test_agent(n=10):
         global sess, mu, pi, q1, q2, q1_pi, q2_pi
         for j in range(n):
             if Teacher: Teacher.set_test_env_params(test_env)
             o, r, d, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
-            while not(d or (ep_len == max_ep_len)):
+            while not (d or (ep_len == max_ep_len)):
                 # Take deterministic actions at test time 
                 o, r, d, _ = test_env.step(get_action(o, True))
                 ep_ret += r
                 ep_len += 1
             logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
             if Teacher: Teacher.record_test_episode(ep_ret, ep_len)
+# TODO jaye in Compute grad ro dorst kon va inke che zamani bayad C az tarigh grad va che zaman az tarigh GMM update shavad ro set kon
+    def compute_grads(k=10):
+        global sess, mu, pi, q1, q2, q1_pi, q2_pi
+        for j in range(k):
+            o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
+            s_list = np.array([])
+            s_multiple_grad_list = np.array([])
+            while not (d or (ep_len == max_ep_len)):
+                """ Caluculate the gradient of policy with respect to C, which is the last env.number_C elements of 
+                observation """
+                # Take deterministic actions at test time
+                # TODO deterministic or stochastic?
+                a = get_action(o, True)
+
+                d_log_p_pi = get_d_log_p_pi(o, a)[-env.env.number_C:]
+
+                o, S, d, _ = env.step(a)
+                s_list = np.append(s_list, S)
+                s_multiple_grad_list = np.append(s_multiple_grad_list, S * d_log_p_pi)
+
+                """ Compute inner product of S, which is reward features and C, which is coefficients to find the final 
+                reward"""
+                r = env.env.C @ S
+
+                ep_ret += r
+                ep_len += 1
+
+            if Teacher: Teacher.record_grads(env.env.C, s_list, s_multiple_grad_list)
+
+            logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+            if Teacher: Teacher.record_train_episode(ep_ret, ep_len)
 
     start_time = time.time()
     o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
@@ -253,6 +289,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
 
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
+
         """
         Until start_steps have elapsed, randomly sample actions
         from a uniform distribution for better exploration. Afterwards, 
@@ -272,7 +309,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         # Ignore the "done" signal if it comes from hitting the time
         # horizon (that is, when it's an artificial terminal signal
         # that isn't based on the agent's state)
-        d = False if ep_len==max_ep_len else d
+        d = False if ep_len == max_ep_len else d
 
         # Store experience to replay buffer
         replay_buffer.store(o, a, r, o2, d)
@@ -287,14 +324,14 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
             This is a slight difference from the SAC specified in the
             original paper.
             """
-            for j in range(np.ceil(ep_len/train_freq).astype('int')):
+            for j in range(np.ceil(ep_len / train_freq).astype('int')):
                 batch = replay_buffer.sample_batch(batch_size)
                 feed_dict = {x_ph: batch['obs1'],
                              x2_ph: batch['obs2'],
                              a_ph: batch['acts'],
                              r_ph: batch['rews'],
                              d_ph: batch['done'],
-                            }
+                             }
                 outs = sess.run(step_ops, feed_dict)
                 # logger.store(LossPi=outs[0], LossQ1=outs[1], LossQ2=outs[2],
                 #              LossV=outs[3], Q1Vals=outs[4], Q2Vals=outs[5],
@@ -310,9 +347,10 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
             epoch = (t + 1) // steps_per_epoch
 
             # Save model
-            if (epoch % save_freq == 0) or (epoch == epochs-1):
-                logger.save_state({'env': env}, None)#itr=epoch)
+            if (epoch % save_freq == 0) or (epoch == epochs - 1):
+                logger.save_state({'env': env}, None)  # itr=epoch)
 
+            compute_grads(k=nb_average_out)
             # Test the performance of the deterministic version of the agent.
             test_agent(n=nb_test_episodes)
             # Log info about epoch
@@ -321,18 +359,18 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
             logger.log_tabular('TestEpRet', with_min_and_max=True)
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('TestEpLen', average_only=True)
-            logger.log_tabular('TotalEnvInteracts', t+1)
-            #logger.log_tabular('Q1Vals', with_min_and_max=True)
-            #logger.log_tabular('Q2Vals', with_min_and_max=True)
-            #logger.log_tabular('VVals', with_min_and_max=True)
-            #logger.log_tabular('LogPi', with_min_and_max=True)
-            #logger.log_tabular('LossPi', average_only=True)
-            #logger.log_tabular('LossQ1', average_only=True)
-            #logger.log_tabular('LossQ2', average_only=True)
-            #logger.log_tabular('LossV', average_only=True)
-            logger.log_tabular('Time', time.time()-start_time)
+            logger.log_tabular('TotalEnvInteracts', t + 1)
+            # logger.log_tabular('Q1Vals', with_min_and_max=True)
+            # logger.log_tabular('Q2Vals', with_min_and_max=True)
+            # logger.log_tabular('VVals', with_min_and_max=True)
+            # logger.log_tabular('LogPi', with_min_and_max=True)
+            # logger.log_tabular('LossPi', average_only=True)
+            # logger.log_tabular('LossQ1', average_only=True)
+            # logger.log_tabular('LossQ2', average_only=True)
+            # logger.log_tabular('LossV', average_only=True)
+            logger.log_tabular('Time', time.time() - start_time)
             logger.dump_tabular()
 
             # Pickle parameterized env data
-            #print(logger.output_dir+'/env_params_save.pkl')
-            if Teacher: Teacher.dump(logger.output_dir+'/env_params_save.pkl')
+            # print(logger.output_dir+'/env_params_save.pkl')
+            if Teacher: Teacher.dump(logger.output_dir + '/env_params_save.pkl')
