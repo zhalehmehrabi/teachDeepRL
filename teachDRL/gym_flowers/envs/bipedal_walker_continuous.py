@@ -237,7 +237,6 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
     # Gather parameters for procedural track generation, make sure to call this before each new episode
     def set_environment(self, C):
         self.C = deepcopy(C)
-        print("ajab")  # TODO update C here
 
     def _destroy(self):
         if not self.terrain: return
