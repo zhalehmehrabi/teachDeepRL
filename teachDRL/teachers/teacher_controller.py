@@ -170,6 +170,7 @@ class TeacherController(object):
                     del test_param_dict[env_param]
         elif self.test_mode == "Target_task":
             test_params = np.concatenate([np.zeros(test_env.env.number_C - 1), np.ones(1)])
+            test_param_dict = param_vec_to_param_dict(self.param_env_bounds, test_params)
         else:
             raise NotImplementedError
 

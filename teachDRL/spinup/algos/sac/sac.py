@@ -246,43 +246,13 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
             o, r, d, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
             while not (d or (ep_len == max_ep_len)):
                 # Take deterministic actions at test time 
-                o, r, d, _ = test_env.step(get_action(o, True))
+                o, S, d, _ = test_env.step(get_action(o, True))
+                r = test_env.env.C @ S
                 ep_ret += r
                 ep_len += 1
             logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
             if Teacher: Teacher.record_test_episode(ep_ret, ep_len)
 
-    # TODO jaye in Compute grad ro dorst kon va inke che zamani bayad C az tarigh grad va che zaman az tarigh GMM update shavad ro set kon
-    def compute_grads(k=10):
-        global sess, mu, pi, q1, q2, q1_pi, q2_pi
-        for j in range(k):
-            o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
-            s_list = np.array([])
-            s_multiple_grad_list = np.array([])
-            while not (d or (ep_len == max_ep_len)):
-                """ Caluculate the gradient of policy with respect to C, which is the last env.number_C elements of 
-                observation """
-                # Take deterministic actions at test time
-                # TODO deterministic or stochastic?
-                a = get_action(o, True)
-
-                d_log_p_pi = get_d_log_p_pi(o, a)[-env.env.number_C:]
-
-                o, S, d, _ = env.step(a)
-                s_list = np.append(s_list, S)
-                s_multiple_grad_list = np.append(s_multiple_grad_list, S * d_log_p_pi)
-
-                """ Compute inner product of S, which is reward features and C, which is coefficients to find the final 
-                reward"""
-                r = env.env.C @ S
-
-                ep_ret += r
-                ep_len += 1
-
-            if Teacher: Teacher.record_grads(env.env.C, s_list, s_multiple_grad_list)
-
-            logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
-            if Teacher: Teacher.record_train_episode(ep_ret, ep_len)
 
     start_time = time.time()
     o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
@@ -292,6 +262,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     episode_update_processed = False
     s_list = np.empty((0, env.env.number_C))
     s_multiple_grad_list = np.empty((0, env.env.number_C))
+    test_agent(10)
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
 
