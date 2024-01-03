@@ -195,7 +195,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
 
         """ Init Coefficients here """
         # this is the number of different components of shaped reward, and the last element is for sparse reward
-        self.number_C = 5 + 1
+        self.number_C = 3 + 1
         self.C = np.zeros(self.number_C)
         high_C = np.array([1] * self.number_C)
         """ until here """
@@ -237,7 +237,8 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
     # Gather parameters for procedural track generation, make sure to call this before each new episode
     def set_environment(self, C):
         self.C = deepcopy(C)
-        print("ajab")# TODO update C here
+        print("ajab")  # TODO update C here
+
     def _destroy(self):
         if not self.terrain: return
         self.world.contactListener = None
@@ -499,7 +500,6 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
     def _add_C_to_state(self, state):
         return np.concatenate([state, self.C])
 
-
     def step(self, action):
         # self.hull.ApplyForceToCenter((0, 20), True) -- Uncomment this to receive a bit of stability help
         control_speed = False  # Should be easier as well
@@ -552,29 +552,27 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         return self._add_C_to_state(np.array(state)), reward, done, {}
 
     def _reward(self, pos, action, state):
-        shaping = 130 * pos[
+        c0 = 130 * pos[
             0] / self.SCALE  # moving forward is a way to receive reward (normalized to get 300 on completion)
-        shaping -= 5.0 * abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
+        c1 = 5 - 5.0 * abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
 
-        reward = 0
-        if self.prev_shaping is not None:
-            reward = shaping - self.prev_shaping
-        self.prev_shaping = shaping
+        # To make everything become reward, I initialize the values and let the mistakes reduce the reward
+        c2 = 20
 
         for a in action:
-            reward -= self.torque_penalty * self.MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
+            c2 -= self.torque_penalty * self.MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
             # normalized to about -50.0 using heuristic, more optimal agent should spend less
 
+        c3 = 0
         done = False
         if self.head_contact or pos[0] < 0:
-            reward = -100
+            # reward = -100
             done = True
         if pos[0] > (self.TERRAIN_LENGTH - self.TERRAIN_GRASS) * self.TERRAIN_STEP:
             done = True
+            c3 = 1000
 
-
-        reward = np.array([0.5] * self.number_C)
-        reward[-1] = 1
+        reward = np.array([c0, c1, c2, c3])
         return reward, done
 
     def render(self, mode='human'):

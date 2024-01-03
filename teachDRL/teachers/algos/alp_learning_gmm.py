@@ -212,7 +212,7 @@ class ALPLearningGMM():
 
         """ A dataset to save the components needed for caluculating the ALP Learning GMM and its derivations"""
         # TODO calculation of soft argmin must be added to the buffer
-        self.number_C = 6
+        self.number_C = 4
         self.dataset_alps = CDataset(self.number_C, alp_buffer_size)
         self.n_c_updates = n_c_updates
         self.GMM_or_Learning = 'GMM'

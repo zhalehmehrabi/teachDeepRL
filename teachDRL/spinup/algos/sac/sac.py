@@ -262,7 +262,6 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     episode_update_processed = False
     s_list = np.empty((0, env.env.number_C))
     s_multiple_grad_list = np.empty((0, env.env.number_C))
-    test_agent(10)
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
 
