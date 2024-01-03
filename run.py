@@ -30,6 +30,17 @@ parser.add_argument('--lr', type=float, default=1e-3)
 parser.add_argument('--train_freq', type=int, default=10)
 parser.add_argument('--batch_size', type=int, default=1000)
 
+# Parameters for ALP Learning GMM
+# this is the number of student episodes before doing an update to on C
+parser.add_argument('--episode_per_update', type=int, default=100)
+# this is the number of C gradient ascent step done in each time we update the C
+parser.add_argument('--n_C_updates', type=int, default=10)
+# this is the amount of sharpness we want for soft argmin function
+parser.add_argument('--beta', type=int, default=100)
+# the coefficient for calculation of grad of ALP
+parser.add_argument('--alpha', type=float, default=0.5)
+# the step size for the learning algorithm
+parser.add_argument('--step_size', type=float, default=0.001)
 # Parameterized bipedal walker arguments, so far only works with bipedal-walker-continuous-v0
 parser.add_argument('--env', type=str, default="bipedal-walker-continuous-v0")
 
@@ -157,11 +168,13 @@ env_init['stump_seq'] = [0, 6.0, 10] if args.stump_seq else None
 
 
 # Initialize teacher
-Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bounds,
-                            seed=args.seed, teacher_params=params)
+Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bounds, alpha=args.alpha,beta=args.beta,
+                            seed=args.seed, teacher_params=params, n_c_updates=args.n_C_updates,
+                            step_size=args.step_size)
 
 # Launch Student training
 sac(env_f, actor_critic=core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed, epochs=args.epochs,
     logger_kwargs=logger_kwargs, alpha=args.ent_coef, max_ep_len=args.max_ep_len, steps_per_epoch=args.steps_per_ep,
     replay_size=args.buf_size, env_init=env_init, env_name=args.env, nb_test_episodes=args.nb_test_episodes, lr=args.lr,
-    train_freq=args.train_freq, batch_size=args.batch_size, Teacher=Teacher)
+    train_freq=args.train_freq, batch_size=args.batch_size, episode_per_update=args.episode_per_update,
+    n_C_updates=args.n_C_updates, Teacher=Teacher)

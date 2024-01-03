@@ -50,7 +50,8 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         steps_per_epoch=200000, epochs=100, replay_size=int(1e6), gamma=0.99,
         polyak=0.995, lr=1e-3, alpha=0.005, batch_size=1000, start_steps=10000,
         max_ep_len=2000, logger_kwargs=dict(), save_freq=1, env_init=dict(),
-        env_name='unknown', nb_test_episodes=50, train_freq=10, nb_average_out=50, Teacher=None):
+        env_name='unknown', nb_test_episodes=50, train_freq=10, episode_per_update=100,
+        n_C_updates=10, Teacher=None):
     """
 
     Args:
@@ -151,7 +152,6 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     env.reset()
 
     obs_dim = env.env.observation_space.shape[0]
-    print(obs_dim)
     act_dim = env.env.action_space.shape[0]
 
     # Action limit for clamping: critically, assumes all dimensions share the same bound!
@@ -251,7 +251,8 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
                 ep_len += 1
             logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
             if Teacher: Teacher.record_test_episode(ep_ret, ep_len)
-# TODO jaye in Compute grad ro dorst kon va inke che zamani bayad C az tarigh grad va che zaman az tarigh GMM update shavad ro set kon
+
+    # TODO jaye in Compute grad ro dorst kon va inke che zamani bayad C az tarigh grad va che zaman az tarigh GMM update shavad ro set kon
     def compute_grads(k=10):
         global sess, mu, pi, q1, q2, q1_pi, q2_pi
         for j in range(k):
@@ -285,8 +286,12 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
 
     start_time = time.time()
     o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
+    average_out_ep_ret = 0
     total_steps = steps_per_epoch * epochs
-
+    episode_counter = 0
+    episode_update_processed = False
+    s_list = np.empty((0, env.env.number_C))
+    s_multiple_grad_list = np.empty((0, env.env.number_C))
     # Main loop: collect experience in env and update/log each epoch
     for t in range(total_steps):
 
@@ -299,10 +304,20 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
             a = get_action(o)
         else:
             a = env.env.action_space.sample()
+        """ Caluculate the gradient of policy with respect to C, which is the last env.number_C elements of 
+        observation """
+        d_log_p_pi = get_d_log_p_pi(o, a)[-env.env.number_C:]
 
         # Step the env
+        o2, S, d, _ = env.step(a)
 
-        o2, r, d, _ = env.step(a)
+        s_list = np.vstack([s_list, S])
+        s_multiple_grad_list = np.vstack([s_multiple_grad_list, S * d_log_p_pi])
+
+        """ Compute inner product of S, which is reward features and C, which is coefficients to find the final 
+        reward"""
+        r = env.env.C @ S
+
         ep_ret += r
         ep_len += 1
 
@@ -319,6 +334,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         o = o2
 
         if d or (ep_len == max_ep_len):
+            episode_counter += 1
             """
             Perform all SAC updates at the end of the trajectory.
             This is a slight difference from the SAC specified in the
@@ -337,11 +353,27 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
                 #              LossV=outs[3], Q1Vals=outs[4], Q2Vals=outs[5],
                 #              VVals=outs[6], LogPi=outs[7])
             logger.store(EpRet=ep_ret, EpLen=ep_len)
-            if Teacher:
-                Teacher.record_train_episode(ep_ret, ep_len)
-                Teacher.set_env_params(env)
-            o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
+            average_out_ep_ret += ep_ret
+            Teacher.record_train_episode(ep_ret, ep_len)
 
+            o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
+            episode_update_processed = False
+
+        if episode_counter > 0 and episode_counter % episode_per_update == 0 and not episode_update_processed:#FIXME
+            episode_update_processed = True
+        # if episode_counter % episode_per_update == 0:
+
+            if Teacher:
+                # averaging everything with repect to episode per update, which is for purpose of averaging out
+                average_out_ep_ret /= episode_per_update
+                s_list /= episode_per_update
+                s_multiple_grad_list /= episode_per_update
+
+                Teacher.record_grads(env.env.C, average_out_ep_ret, s_list, s_multiple_grad_list)
+                Teacher.update_episodes(average_out_ep_ret)
+                Teacher.set_env_params(env)
+            s_list = np.empty((0, env.env.number_C))
+            s_multiple_grad_list = np.empty((0, env.env.number_C))
         # End of epoch wrap-up
         if t > 0 and (t + 1) % steps_per_epoch == 0:
             epoch = (t + 1) // steps_per_epoch
@@ -349,8 +381,8 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
             # Save model
             if (epoch % save_freq == 0) or (epoch == epochs - 1):
                 logger.save_state({'env': env}, None)  # itr=epoch)
-
-            compute_grads(k=nb_average_out)
+            # TODO compute grad ashghal nist?
+            #compute_grads(k=episode_per_update)
             # Test the performance of the deterministic version of the agent.
             test_agent(n=nb_test_episodes)
             # Log info about epoch

@@ -574,6 +574,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
 
 
         reward = np.array([0.5] * self.number_C)
+        reward[-1] = 1
         return reward, done
 
     def render(self, mode='human'):

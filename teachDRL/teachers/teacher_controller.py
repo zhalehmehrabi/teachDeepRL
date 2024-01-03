@@ -63,7 +63,7 @@ def param_dict_to_param_vec(param_env_bounds, param_dict):  # needs param_env_bo
 
 
 class TeacherController(object):
-    def __init__(self, teacher, nb_test_episodes, param_env_bounds, seed=None, teacher_params={}):
+    def __init__(self, teacher, nb_test_episodes, param_env_bounds, alpha, n_c_updates, step_size, beta=None, seed=None, teacher_params={}):
         self.teacher = teacher
         self.nb_test_episodes = nb_test_episodes
         self.test_ep_counter = 0
@@ -93,14 +93,15 @@ class TeacherController(object):
         elif teacher == 'ALP-GMM':
             self.task_generator = ALPGMM(mins, maxs, seed=seed, params=teacher_params)
         elif teacher == 'ALP-Learning-GMM':
-            self.task_generator = ALPLearningGMM(mins, maxs, seed=seed, params=teacher_params)
+            self.task_generator = ALPLearningGMM(mins, maxs, beta=beta, seed=seed, params=teacher_params, alpha=alpha,
+                                                 n_c_updates=n_c_updates, step_size=step_size)
         elif teacher == 'Covar-GMM':
             self.task_generator = CovarGMM(mins, maxs, seed=seed, params=teacher_params)
         else:
             print('Unknown teacher')
             raise NotImplementedError
 
-        self.test_mode = "Shaped"
+        self.test_mode = "Target_task"
         if self.test_mode == "fixed_set":
             name = get_test_set_name(self.param_env_bounds)
             self.test_env_list = pickle.load(open("teachDRL/teachers/test_sets/" + name + ".pkl", "rb"))
@@ -122,9 +123,11 @@ class TeacherController(object):
     def record_train_episode(self, reward, ep_len):
         self.env_train_rewards.append(reward)
         self.env_train_len.append(ep_len)
-        if self.teacher != 'Oracle':
+        if self.teacher != 'Oracle' and self.teacher != 'ALP-Learning-GMM':
             reward = np.interp(reward, (-150, 350), (0, 1))
             self.env_train_norm_rewards.append(reward)
+
+    def update_episodes(self, reward):
         self.task_generator.update(self.env_params_train[-1], reward)
 
     def record_test_episode(self, reward, ep_len):
@@ -165,6 +168,8 @@ class TeacherController(object):
             for env_param in legacy:
                 if env_param in keys:
                     del test_param_dict[env_param]
+        elif self.test_mode == "Target_task":
+            test_params = np.concatenate([np.zeros(test_env.env.number_C - 1), np.ones(1)])
         else:
             raise NotImplementedError
 
@@ -178,5 +183,5 @@ class TeacherController(object):
         if self.test_ep_counter == self.nb_test_episodes:
             self.test_ep_counter = 0
 
-    def record_grads(self, C, S, s_multiplied_grad_log_p_pi):
-        self.task_generator.dataset_alps.store(C, S, s_multiplied_grad_log_p_pi)
+    def record_grads(self, C, average_return, S, s_multiplied_grad_log_p_pi):
+        self.task_generator.dataset_alps.store(C, average_return,S, s_multiplied_grad_log_p_pi)
