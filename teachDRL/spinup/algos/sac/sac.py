@@ -329,9 +329,8 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
             o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
             episode_update_processed = False
 
-        if episode_counter > 0 and episode_counter % episode_per_update == 0 and not episode_update_processed:#FIXME
+        if episode_counter > 0 and episode_counter % episode_per_update == 0 and not episode_update_processed:
             episode_update_processed = True
-        # if episode_counter % episode_per_update == 0:
 
             if Teacher:
                 # averaging everything with repect to episode per update, which is for purpose of averaging out

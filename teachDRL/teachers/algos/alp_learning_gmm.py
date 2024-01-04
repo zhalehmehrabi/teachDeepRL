@@ -53,10 +53,6 @@ class CDataset:
         self.ptr = (self.ptr + 1) % self.max_size
         self.size = min(self.size + 1, self.max_size)
 
-    def CalculateSoftArgMin(self, newC):
-        print("calculations")
-
-
 def proportional_choice(v, eps=0.):
     if np.sum(v) == 0 or np.random.rand() < eps:
         return np.random.randint(np.size(v))
@@ -99,7 +95,7 @@ class EmpiricalALPLearningComputer():
         self.grad = tape.gradient(C_prime, self.task_tensor_placeholder)
         # self.grad = tape.gradient(self.weights, a)
 
-    def compute_alp(self, task, reward):  # TODO change this function
+    def compute_alp(self, task, reward):
         alp = 0
         grad_alp = 0
         if self.alp_knn.size > 5:
@@ -108,7 +104,6 @@ class EmpiricalALPLearningComputer():
             indices_including_task = np.linalg.norm(self.alp_knn.C_buf, axis=1) != 0
             indices = np.logical_and(np.linalg.norm(task - self.alp_knn.C_buf, axis=1) != 0, indices_including_task)
             index_current_C = np.logical_xor(indices, indices_including_task)
-            # TODO ya bayad place holderi konam in function ro, ya bayad eager mode khamush roshan konam
 
             with tf.Session() as sess:
                 sess.run(tf.global_variables_initializer())
@@ -136,7 +131,7 @@ class EmpiricalALPLearningComputer():
             alp = self.alpha * (np.abs(lp1)) + (1 - self.alpha) * np.abs(lp2)
 
             # 2 - compute grad ALP with respect to C, which is task here.
-            # TODO calculate the gradient of ALP
+
             # 2.1 - calculate the first element of first part of derivation
             s_multiply_grad_p_pi = self.alp_knn.S_multiply_grad_log_p_buf[index_current_C]
             # 2.2 - calculate the second element of first part of derivation
@@ -163,7 +158,7 @@ class EmpiricalALPLearningComputer():
         # Add to database
         # self.alp_knn.add_xy(reward, task)
         return alp, grad_alp
-        # TODO Add a function which calculates the derivatives
+
 
 
 # Absolute Learning Progress - Gaussian Mixture Model
@@ -211,7 +206,7 @@ class ALPLearningGMM():
         self.bk = {'weights': [], 'covariances': [], 'means': [], 'tasks_alps': [], 'episodes': []}
 
         """ A dataset to save the components needed for caluculating the ALP Learning GMM and its derivations"""
-        # TODO calculation of soft argmin must be added to the buffer
+
         self.number_C = 4
         self.dataset_alps = CDataset(self.number_C, alp_buffer_size)
         self.n_c_updates = n_c_updates
