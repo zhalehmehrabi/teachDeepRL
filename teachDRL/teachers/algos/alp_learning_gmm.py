@@ -276,11 +276,11 @@ class ALPLearningGMM():
                 self.bk['tasks_alps'] = self.tasks_alps
                 self.bk['episodes'].append(len(self.tasks))
 
-    def sample_task(self):
+    def sample_task(self): # TODO sample bardari bayad ba yek arg injuri beshe ke har bar ke az GMM migirim, chand bar az learning begirim??
         if (len(self.tasks) < self.nb_random) or (np.random.random() < self.random_task_ratio):
             # Random task sampling
             new_task = self.random_task_generator.sample()
-            new_task = scipy.special.softmax(new_task)
+            new_task = np.float32(scipy.special.softmax(new_task))
         elif self.GMM_or_Learning == 'GMM':
             # ALP-based task sampling
 
@@ -300,7 +300,6 @@ class ALPLearningGMM():
             new_task = np.float32(scipy.special.softmax(new_task))
             self.GMM_or_Learning = 'Learning'
         else:
-            # TODO ebteda update C bayad anjam beshe be tedad lazem, va baad hamun C update shode khoroju dade beshe
             new_task = self.tasks[-1] + self.n_c_updates * self.step_size * self.grad_alps[-1]
             new_task = np.float32(scipy.special.softmax(new_task))
             self.GMM_or_Learning = 'GMM'
