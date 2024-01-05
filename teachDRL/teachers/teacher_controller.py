@@ -153,7 +153,7 @@ class TeacherController(object):
 
     def set_env_params(self, env):
         params = np.float32(copy.copy(self.task_generator.sample_task()))
-        # assert type(params[0]) == np.float32 # FIXME ino bastam ta bbinam chi mishe
+        assert type(params[0]) == np.float32 # FIXME ino bastam ta bbinam chi mishe
         self.env_params_train.append(params)
         param_dict = param_vec_to_param_dict(self.param_env_bounds, params)
         env.env.set_environment(**param_dict)

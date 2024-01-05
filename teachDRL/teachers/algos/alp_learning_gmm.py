@@ -297,7 +297,7 @@ class ALPLearningGMM():
             new_task = np.float32(scipy.special.softmax(new_task))
             self.GMM_or_Learning = 'Learning'
         else:
-            new_task = self.tasks[-1] + self.n_c_updates * self.step_size * self.grad_alps[-1]
+            new_task = self.tasks[-1] + self.n_c_updates * self.step_size * np.squeeze(self.grad_alps[-1])
             new_task = np.float32(scipy.special.softmax(new_task))
             self.counter += 1
             if self.counter % self.learning_radio == 0:

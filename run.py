@@ -174,7 +174,7 @@ env_init['stump_seq'] = [0, 6.0, 10] if args.stump_seq else None
 # Initialize teacher
 Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bounds, alpha=args.alpha,beta=args.beta,
                             seed=args.seed, teacher_params=params, n_c_updates=args.n_C_updates,
-                            step_size=args.step_size, Learning_radio=args.learning_radio)
+                            step_size=args.step_size, learning_radio=args.learning_radio)
 
 # Launch Student training
 sac(env_f, actor_critic=core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed, epochs=args.epochs,

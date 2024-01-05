@@ -136,7 +136,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     logger = EpochLogger(**logger_kwargs)
     hyperparams = locals()
     if Teacher: del hyperparams['Teacher']  # remove teacher to avoid serialization error
-    # logger.save_config(hyperparams) #TODO, have to uncomment
+    logger.save_config(hyperparams) #TODO, have to uncomment
 
     tf.set_random_seed(seed)
     np.random.seed(seed)
@@ -238,7 +238,6 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         act_op = d_log_p
         return sess.run(act_op, feed_dict={x_ph: o.reshape(1, -1), a_ph: a.reshape(1, -1)})[0]
 
-    # TODO test the agent is two parts, one the same as bellow but just with C*, the other one must be written in a way that we can calculate the derivative of log of policy wrt C
     def test_agent(n=10):
         global sess, mu, pi, q1, q2, q1_pi, q2_pi
         for j in range(n):
@@ -346,12 +345,10 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         # End of epoch wrap-up
         if t > 0 and (t + 1) % steps_per_epoch == 0:
             epoch = (t + 1) // steps_per_epoch
-
+            print("end of epoch")
             # Save model
             if (epoch % save_freq == 0) or (epoch == epochs - 1):
                 logger.save_state({'env': env}, None)  # itr=epoch)
-            # TODO compute grad ashghal nist?
-            #compute_grads(k=episode_per_update)
             # Test the performance of the deterministic version of the agent.
             test_agent(n=nb_test_episodes)
             # Log info about epoch
