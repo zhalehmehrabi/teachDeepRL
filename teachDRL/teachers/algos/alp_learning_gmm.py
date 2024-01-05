@@ -164,7 +164,7 @@ class EmpiricalALPLearningComputer():
 # Absolute Learning Progress - Gaussian Mixture Model
 # mins / maxs are vectors defining task space boundaries (ex: mins=[0,0,0] maxs=[1,1,1])
 class ALPLearningGMM():
-    def __init__(self, mins, maxs, beta, alpha, n_c_updates, step_size,  seed=None, params=dict()):
+    def __init__(self, mins, maxs, beta, alpha, n_c_updates, step_size, learning_radio, seed=None, params=dict()):
         self.seed = seed
         if not seed:
             self.seed = np.random.randint(42, 424242)
@@ -212,6 +212,8 @@ class ALPLearningGMM():
         self.n_c_updates = n_c_updates
         self.GMM_or_Learning = 'GMM'
         self.step_size = step_size
+        self.learning_radio = learning_radio
+        self.counter = 0
         # Init ALP computer
         self.alp_computer = EmpiricalALPLearningComputer(beta=beta, dataset=self.dataset_alps, n_C=self.number_C,
                                                          alpha=alpha)
@@ -271,7 +273,7 @@ class ALPLearningGMM():
                 self.bk['tasks_alps'] = self.tasks_alps
                 self.bk['episodes'].append(len(self.tasks))
 
-    def sample_task(self): # TODO sample bardari bayad ba yek arg injuri beshe ke har bar ke az GMM migirim, chand bar az learning begirim??
+    def sample_task(self):
         if (len(self.tasks) < self.nb_random) or (np.random.random() < self.random_task_ratio):
             # Random task sampling
             new_task = self.random_task_generator.sample()
@@ -297,7 +299,9 @@ class ALPLearningGMM():
         else:
             new_task = self.tasks[-1] + self.n_c_updates * self.step_size * self.grad_alps[-1]
             new_task = np.float32(scipy.special.softmax(new_task))
-            self.GMM_or_Learning = 'GMM'
+            self.counter += 1
+            if self.counter % self.learning_radio == 0:
+                self.GMM_or_Learning = 'GMM'
         return new_task
 
     def dump(self, dump_dict):

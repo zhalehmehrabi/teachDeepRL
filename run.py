@@ -41,6 +41,10 @@ parser.add_argument('--beta', type=int, default=100)
 parser.add_argument('--alpha', type=float, default=0.5)
 # the step size for the learning algorithm
 parser.add_argument('--step_size', type=float, default=0.001)
+# this value shows how many learning steps must be done before sampling again from GMM
+parser.add_argument('--learning_radio', type=int, default=2)
+
+
 # Parameterized bipedal walker arguments, so far only works with bipedal-walker-continuous-v0
 parser.add_argument('--env', type=str, default="bipedal-walker-continuous-v0")
 
@@ -170,7 +174,7 @@ env_init['stump_seq'] = [0, 6.0, 10] if args.stump_seq else None
 # Initialize teacher
 Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bounds, alpha=args.alpha,beta=args.beta,
                             seed=args.seed, teacher_params=params, n_c_updates=args.n_C_updates,
-                            step_size=args.step_size)
+                            step_size=args.step_size, Learning_radio=args.learning_radio)
 
 # Launch Student training
 sac(env_f, actor_critic=core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed, epochs=args.epochs,

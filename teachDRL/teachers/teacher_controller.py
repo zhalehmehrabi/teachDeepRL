@@ -63,7 +63,8 @@ def param_dict_to_param_vec(param_env_bounds, param_dict):  # needs param_env_bo
 
 
 class TeacherController(object):
-    def __init__(self, teacher, nb_test_episodes, param_env_bounds, alpha, n_c_updates, step_size, beta=None, seed=None, teacher_params={}):
+    def __init__(self, teacher, nb_test_episodes, param_env_bounds, alpha, n_c_updates, step_size,learning_radio,
+                 beta=None, seed=None, teacher_params={}):
         self.teacher = teacher
         self.nb_test_episodes = nb_test_episodes
         self.test_ep_counter = 0
@@ -94,7 +95,8 @@ class TeacherController(object):
             self.task_generator = ALPGMM(mins, maxs, seed=seed, params=teacher_params)
         elif teacher == 'ALP-Learning-GMM':
             self.task_generator = ALPLearningGMM(mins, maxs, beta=beta, seed=seed, params=teacher_params, alpha=alpha,
-                                                 n_c_updates=n_c_updates, step_size=step_size)
+                                                 n_c_updates=n_c_updates, step_size=step_size,
+                                                 learning_radio=learning_radio)
         elif teacher == 'Covar-GMM':
             self.task_generator = CovarGMM(mins, maxs, seed=seed, params=teacher_params)
         else:
