@@ -69,6 +69,7 @@ parser.add_argument('--shaped_reward', action='store_true')
 
 # Teacher-specific arguments:
 parser.add_argument('--teacher', type=str, default="ALP-GMM")  # ALP-GMM, Covar-GMM, RIAC, Oracle, Random
+parser.add_argument('--new_formula', action='store_true')  # ALP-GMM, Covar-GMM, RIAC, Oracle, Random
 
 # ALPGMM (Absolute Learning Progress - Gaussian Mixture Model) related arguments
 parser.add_argument('--gmm_fitness_fun', '-fit', type=str, default=None)
@@ -174,7 +175,7 @@ env_init['stump_seq'] = [0, 6.0, 10] if args.stump_seq else None
 # Initialize teacher
 Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bounds, alpha=args.alpha,beta=args.beta,
                             seed=args.seed, teacher_params=params, n_c_updates=args.n_C_updates,
-                            step_size=args.step_size, learning_radio=args.learning_radio)
+                            step_size=args.step_size, learning_radio=args.learning_radio, new_formula=args.new_formula)
 
 # Launch Student training
 sac(env_f, actor_critic=core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed, epochs=args.epochs,

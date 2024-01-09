@@ -4,6 +4,7 @@ import copy
 from teachDRL.teachers.algos.riac import RIAC
 from teachDRL.teachers.algos.alp_gmm import ALPGMM
 from teachDRL.teachers.algos.alp_learning_gmm import ALPLearningGMM
+from teachDRL.teachers.algos.alp_gmm_new_formula import ALPGMMNewFormula
 from teachDRL.teachers.algos.covar_gmm import CovarGMM
 from teachDRL.teachers.algos.random_teacher import RandomTeacher
 from teachDRL.teachers.algos.oracle_teacher import OracleTeacher
@@ -64,7 +65,7 @@ def param_dict_to_param_vec(param_env_bounds, param_dict):  # needs param_env_bo
 
 class TeacherController(object):
     def __init__(self, teacher, nb_test_episodes, param_env_bounds, alpha, n_c_updates, step_size,learning_radio,
-                 beta=None, seed=None, teacher_params={}):
+                 beta=None, seed=None, new_formula=False, teacher_params={}):
         self.teacher = teacher
         self.nb_test_episodes = nb_test_episodes
         self.test_ep_counter = 0
@@ -91,8 +92,12 @@ class TeacherController(object):
             self.task_generator = RandomTeacher(mins, maxs, seed=seed)
         elif teacher == 'RIAC':
             self.task_generator = RIAC(mins, maxs, seed=seed, params=teacher_params)
-        elif teacher == 'ALP-GMM':
+        elif teacher == 'ALP-GMM' and not new_formula:
             self.task_generator = ALPGMM(mins, maxs, seed=seed, params=teacher_params)
+        elif teacher == 'ALP-GMM' and new_formula:
+            self.task_generator = ALPGMMNewFormula(mins, maxs, beta=beta, seed=seed, params=teacher_params, alpha=alpha,
+                                                 n_c_updates=n_c_updates, step_size=step_size,
+                                                 learning_radio=learning_radio)
         elif teacher == 'ALP-Learning-GMM':
             self.task_generator = ALPLearningGMM(mins, maxs, beta=beta, seed=seed, params=teacher_params, alpha=alpha,
                                                  n_c_updates=n_c_updates, step_size=step_size,
