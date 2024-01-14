@@ -73,14 +73,19 @@ def mlp_categorical_policy(x, a, hidden_sizes, activation, output_activation, ac
     logp_pi = tf.reduce_sum(tf.one_hot(pi, depth=act_dim) * logp_all, axis=1)
     return pi, logp, logp_pi
 
-
+LOG_STD_MAX = 2
+LOG_STD_MIN = -20
 def mlp_gaussian_policy(x, a, hidden_sizes, activation, output_activation, action_space):
     act_dim = a.shape.as_list()[-1]
-    mu = mlp(x, list(hidden_sizes)+[act_dim], activation, output_activation)
-    log_std = tf.get_variable(name='log_std', initializer=-0.5*np.ones(act_dim, dtype=np.float32))
+    net = mlp(x, list(hidden_sizes), activation, activation)
+    mu = tf.layers.dense(net, act_dim, activation=output_activation)
+
+    log_std = tf.layers.dense(net, act_dim, activation=tf.tanh)
+    log_std = LOG_STD_MIN + 0.5 * (LOG_STD_MAX - LOG_STD_MIN) * (log_std + 1)
+
     std = tf.exp(log_std)
     pi = mu + tf.random_normal(tf.shape(mu)) * std
-    logp = gaussian_likelihood(a, mu, log_std)
+    logp = gaussian_likelihood(pi, mu, log_std)# TODO is here a correct or pi? Very important uestion
     logp_pi = gaussian_likelihood(pi, mu, log_std)
     return pi, logp, logp_pi
 
@@ -88,7 +93,7 @@ def mlp_gaussian_policy(x, a, hidden_sizes, activation, output_activation, actio
 """
 Actor-Critics
 """
-def mlp_actor_critic(x, a, hidden_sizes=(64,64), activation=tf.tanh, 
+def mlp_actor_critic(x, a, hidden_sizes=(64,64), activation=tf.nn.relu,
                      output_activation=None, policy=None, action_space=None):
 
     # default policy builder depends on action space
@@ -101,4 +106,9 @@ def mlp_actor_critic(x, a, hidden_sizes=(64,64), activation=tf.tanh,
         pi, logp, logp_pi = policy(x, a, hidden_sizes, activation, output_activation, action_space)
     with tf.variable_scope('v'):
         v = tf.squeeze(mlp(x, list(hidden_sizes)+[1], activation, None), axis=1)
-    return pi, logp, logp_pi, v
+    with tf.variable_scope('d_log_p'):
+        with tf.GradientTape(persistent=True) as tape:
+            tape.watch(x)
+            pi, logp, logp_pi = policy(x, a, hidden_sizes, activation, output_activation, action_space)
+        d_log_p = tape.gradient(logp_pi, x)
+    return pi, logp, logp_pi, v, d_log_p

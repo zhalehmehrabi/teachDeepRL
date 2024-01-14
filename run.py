@@ -1,19 +1,26 @@
 import argparse
 from teachDRL.spinup.utils.run_utils import setup_logger_kwargs
 from teachDRL.spinup.algos.sac.sac import sac
-from teachDRL.spinup.algos.sac import core
+from teachDRL.spinup.algos.vpg.vpg import vpg
+from teachDRL.spinup.algos.sac import core as sac_core
+from teachDRL.spinup.algos.vpg import core as vpg_core
 import gym
 import teachDRL.gym_flowers
 from teachDRL.teachers.teacher_controller import TeacherController
+from teachDRL.spinup.utils.mpi_tools import mpi_fork
+
 from collections import OrderedDict
 import os
 import numpy as np
+# from teachDRL.spinup.algos.gpomdp import gpomdp
 
 # Argument definition
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--exp_name', type=str, default='test')
 parser.add_argument('--seed', '-s', type=int, default=0)
+parser.add_argument('--algorithm', type=str, default='GPOMDP')
+
 
 # Deep RL student arguments, so far only works with SAC
 parser.add_argument('--hid', type=int, default=-1)  # number of neurons in hidden layers
@@ -29,6 +36,11 @@ parser.add_argument('--nb_test_episodes', type=int, default=50)
 parser.add_argument('--lr', type=float, default=1e-3)
 parser.add_argument('--train_freq', type=int, default=10)
 parser.add_argument('--batch_size', type=int, default=1000)
+
+#
+parser.add_argument('--cpu', type=int, default=1)
+
+
 
 # Parameters for ALP Learning GMM
 # this is the number of student episodes before doing an update to on C
@@ -177,9 +189,26 @@ Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bound
                             seed=args.seed, teacher_params=params, n_c_updates=args.n_C_updates,
                             step_size=args.step_size, learning_radio=args.learning_radio, new_formula=args.new_formula)
 
-# Launch Student training
-sac(env_f, actor_critic=core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed, epochs=args.epochs,
-    logger_kwargs=logger_kwargs, alpha=args.ent_coef, max_ep_len=args.max_ep_len, steps_per_epoch=args.steps_per_ep,
-    replay_size=args.buf_size, env_init=env_init, env_name=args.env, nb_test_episodes=args.nb_test_episodes, lr=args.lr,
-    train_freq=args.train_freq, batch_size=args.batch_size, episode_per_update=args.episode_per_update,
-    n_C_updates=args.n_C_updates, Teacher=Teacher)
+if args.algorithm == 'SAC':
+    # Launch Student training
+    sac(env_f, actor_critic=sac_core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed, epochs=args.epochs,
+        logger_kwargs=logger_kwargs, alpha=args.ent_coef, max_ep_len=args.max_ep_len, steps_per_epoch=args.steps_per_ep,
+        replay_size=args.buf_size, env_init=env_init, env_name=args.env, nb_test_episodes=args.nb_test_episodes, lr=args.lr,
+        train_freq=args.train_freq, batch_size=args.batch_size, episode_per_update=args.episode_per_update,
+        n_C_updates=args.n_C_updates, Teacher=Teacher)
+elif args.algorithm == 'GPOMDP':
+    sac(env_f, actor_critic=sac_core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed, epochs=args.epochs,
+        logger_kwargs=logger_kwargs, alpha=args.ent_coef, max_ep_len=args.max_ep_len, steps_per_epoch=args.steps_per_ep,
+        replay_size=args.buf_size, env_init=env_init, env_name=args.env, nb_test_episodes=args.nb_test_episodes, lr=args.lr,
+        train_freq=args.train_freq, batch_size=args.batch_size, episode_per_update=args.episode_per_update,
+        n_C_updates=args.n_C_updates, Teacher=Teacher)
+elif args.algorithm == 'VPG':
+    vpg(env_f, actor_critic=vpg_core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed,
+        steps_per_epoch=args.steps_per_ep, epochs=args.epochs, env_init=env_init, env_name=args.env,
+        nb_test_episodes=args.nb_test_episodes, train_freq=args.train_freq, episode_per_update=args.episode_per_update,
+        n_C_updates=args.n_C_updates, Teacher=Teacher, logger_kwargs=logger_kwargs)
+    mpi_fork(args.cpu)  # run parallel code with mpi
+
+else:
+    print("Not implemented")
+    exit(10)

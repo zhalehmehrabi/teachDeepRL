@@ -197,14 +197,15 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         # this is the number of different components of shaped reward, and the last element is for sparse reward
         self.number_C = 3 + 1
         self.C = np.zeros(self.number_C)
-        high_C = np.array([1] * self.number_C)
+        low_C = np.zeros(self.number_C)
+        high_C = np.ones(self.number_C)
         """ until here """
 
         # Update action space and observation space
         self.action_space = spaces.Box(np.array([-1] * self.nb_leg_pairs * 4),
                                        np.array([1] * self.nb_leg_pairs * 4), dtype=np.float32)
         high = np.array([np.inf] * (4 + self.nb_leg_pairs * 2 * 5 + self.NB_LIDAR))
-        self.observation_space = spaces.Box(np.concatenate([-high, -high_C]), np.concatenate([high, high_C]),
+        self.observation_space = spaces.Box(np.concatenate([-high, low_C]), np.concatenate([high, high_C]),
                                             dtype=np.float32)
 
         # Update walker's fixtures
@@ -569,7 +570,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
             done = True
         if pos[0] > (self.TERRAIN_LENGTH - self.TERRAIN_GRASS) * self.TERRAIN_STEP:
             done = True
-            c3 = 1000
+            c3 = 10000
 
         reward = np.array([c0, c1, c2, c3])
         return reward, done
