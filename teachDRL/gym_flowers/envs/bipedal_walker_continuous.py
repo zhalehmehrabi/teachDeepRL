@@ -554,10 +554,10 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
     def _reward(self, pos, action, state):
         c0 = 130 * pos[
             0] / self.SCALE  # moving forward is a way to receive reward (normalized to get 300 on completion)
-        c1 = 1 - 5.0 * abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
+        c1 = 5 - 5.0 * abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
 
         # To make everything become reward, I initialize the values and let the mistakes reduce the reward
-        c2 = 0.05
+        c2 = 20
 
         for a in action:
             c2 -= self.torque_penalty * self.MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
