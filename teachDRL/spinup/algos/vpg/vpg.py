@@ -236,14 +236,16 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         global sess, mu, pi, q1, q2, q1_pi, q2_pi
         for j in range(n):
             if Teacher: Teacher.set_test_env_params(test_env)
-            o, r, d, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
+            o, r, d, ep_ret, ep_len, ep_c0, ep_c1 = test_env.reset(), 0, False, 0, 0, 0, 0
             while not (d or (ep_len == max_ep_len)):
                 # Take deterministic actions at test time
                 o, S, d, _ = test_env.step(get_action(o)[0])
                 r = test_env.env.C @ S
                 ep_ret += r
                 ep_len += 1
-            logger.store(TestEpRet=ep_ret, TestEpLen=ep_len)
+                ep_c0 += S[0]
+                ep_c1 += S[1]
+            logger.store(TestEpC0=ep_c0, TestEpC1=ep_c1, TestEpLen=ep_len)
             if Teacher: Teacher.record_test_episode(ep_ret, ep_len)
     def update():
         inputs = {k: v for k, v in zip(all_phs, buf.get())}
@@ -288,8 +290,7 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
             logger.store(VVals=v_t)
 
             o, S, d, _ = env.step(a[0])
-            if S[3] != 0:
-                print("residam")
+
             s_list = np.vstack([s_list, S])
             s_multiple_grad_list = np.vstack([s_multiple_grad_list, S * d_log_p_pi])
 
@@ -315,21 +316,22 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
 
                 o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
                 episode_update_processed = False
+                episode_counter += 1
 
-        if episode_counter > 0 and episode_counter % episode_per_update == 0 and not episode_update_processed:
-            episode_update_processed = True
+            if episode_counter > 0 and episode_counter % episode_per_update == 0 and not episode_update_processed:
+                episode_update_processed = True
 
-            if Teacher:
-                # averaging everything with repect to episode per update, which is for purpose of averaging out
-                average_out_ep_ret /= episode_per_update
-                s_list /= episode_per_update
-                s_multiple_grad_list /= episode_per_update
+                if Teacher:
+                    # averaging everything with repect to episode per update, which is for purpose of averaging out
+                    average_out_ep_ret /= episode_per_update
+                    s_list /= episode_per_update
+                    s_multiple_grad_list /= episode_per_update
 
-                Teacher.record_grads(env.env.C, average_out_ep_ret, s_list, s_multiple_grad_list)
-                Teacher.update_episodes(average_out_ep_ret)
-                Teacher.set_env_params(env)
-            s_list = np.empty((0, env.env.number_C))
-            s_multiple_grad_list = np.empty((0, env.env.number_C))
+                    Teacher.record_grads(env.env.C, average_out_ep_ret, s_list, s_multiple_grad_list)
+                    Teacher.update_episodes(average_out_ep_ret)
+                    Teacher.set_env_params(env)
+                s_list = np.empty((0, env.env.number_C))
+                s_multiple_grad_list = np.empty((0, env.env.number_C))
 
         # Save model
         if (epoch % save_freq == 0) or (epoch == epochs - 1):
@@ -354,9 +356,13 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         logger.log_tabular('Entropy', average_only=True)
         logger.log_tabular('KL', average_only=True)
         logger.log_tabular('Time', time.time() - start_time)
-        logger.log_tabular('TestEpRet', with_min_and_max=True)
+        logger.log_tabular('TestEpC0', with_min_and_max=True)
+        logger.log_tabular('TestEpC1', with_min_and_max=True)
         logger.log_tabular('TestEpLen', average_only=True)
+
         logger.dump_tabular()
+    with open('C_dataset.npy', 'wb') as f:
+        np.save(f, np.array(Teacher.task_generator.C_dataset))
 
 
 if __name__ == '__main__':
