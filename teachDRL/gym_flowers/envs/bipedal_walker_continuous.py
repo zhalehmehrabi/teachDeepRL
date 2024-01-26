@@ -33,6 +33,12 @@ class ContactDetector(contactListener):
         for leg in [self.env.legs[1], self.env.legs[3]]:
             if leg in [contact.fixtureA.body, contact.fixtureB.body]:
                 leg.ground_contact = True
+        for leg in self.env.legs:
+            if leg in [contact.fixtureA.body, contact.fixtureB.body]:
+                if contact.fixtureA.body in self.env.stumps or contact.fixtureB.body in self.env.stumps:
+                    self.env.leg_contact = True
+
+
 
     def EndContact(self, contact):
         for leg in [self.env.legs[1], self.env.legs[3]]:
@@ -115,6 +121,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         self.viewer = None
         self.world = Box2D.b2World()
         self.terrain = None
+        self.stumps = None
         self.hull = None
         self.prev_shaping = None
 
@@ -195,7 +202,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
 
         """ Init Coefficients here """
         # this is the number of different components of shaped reward, and the last element is for sparse reward
-        self.number_C = 3 + 1
+        self.number_C = 2
         self.C = np.zeros(self.number_C)
         low_C = np.zeros(self.number_C)
         high_C = np.ones(self.number_C)
@@ -245,6 +252,8 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         for t in self.terrain:
             self.world.DestroyBody(t)
         self.terrain = []
+        self.stumps = []
+
         self.world.DestroyBody(self.hull)
         self.hull = None
         for leg in self.legs:
@@ -270,6 +279,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         velocity = 0.0
         y = self.TERRAIN_HEIGHT
         self.terrain = []
+        self.stumps = []
         self.terrain_x = []
         self.terrain_y = []
         x = 0
@@ -318,6 +328,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
                     userData='stump')
                 t.color1, t.color2 = (1, 1, 1), (0.6, 0.6, 0.6)
                 self.terrain.append(t)
+                self.stumps.append(t)
             elif state == HEXA and oneshot:
                 # first point do not move
                 poly = []
@@ -473,6 +484,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         self.world.contactListener_bug_workaround = ContactDetector(self)
         self.world.contactListener = self.world.contactListener_bug_workaround
         self.head_contact = False
+        self.leg_contact = False
         self.prev_shaping = None
         self.scroll = 0.0
         self.lidar_render = 0
@@ -552,27 +564,23 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         return self._add_C_to_state(np.array(state)), reward, done, {}
 
     def _reward(self, pos, action, state):
-        c0 = 130 * pos[
-            0] / self.SCALE  # moving forward is a way to receive reward (normalized to get 300 on completion)
-        c1 = 5 - 5.0 * abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
+        c0 = state[2]  # horizontal speed, range (-1, 1)
+        init_y = self.TERRAIN_HEIGHT + 2 * self.LEG_H
+        if pos[1] > init_y:
+            c1 = abs(state[3])/2  # vertical speed, since every upward jump, has a downward fall, I get the abs and
+            # devided by two to be normal again
+        else:
+            c1 = 0
 
-        # To make everything become reward, I initialize the values and let the mistakes reduce the reward
-        c2 = 20
-
-        for a in action:
-            c2 -= self.torque_penalty * self.MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
-            # normalized to about -50.0 using heuristic, more optimal agent should spend less
-
-        c3 = 0
         done = False
-        if self.head_contact or pos[0] < 0:
-            # reward = -100
+        if self.head_contact or self.leg_contact or pos[0] < 0:
+            c0 = -1
+            c1 = -1
             done = True
         if pos[0] > (self.TERRAIN_LENGTH - self.TERRAIN_GRASS) * self.TERRAIN_STEP:
             done = True
-            c3 = 10000
 
-        reward = np.array([c0, c1, c2, c3])
+        reward = np.array([c0, c1])
         return reward, done
 
     def render(self, mode='human'):
