@@ -316,21 +316,22 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
 
                 o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
                 episode_update_processed = False
+                episode_counter += 1
 
-        if episode_counter > 0 and episode_counter % episode_per_update == 0 and not episode_update_processed:
-            episode_update_processed = True
+            if episode_counter > 0 and episode_counter % episode_per_update == 0 and not episode_update_processed:
+                episode_update_processed = True
 
-            if Teacher:
-                # averaging everything with repect to episode per update, which is for purpose of averaging out
-                average_out_ep_ret /= episode_per_update
-                s_list /= episode_per_update
-                s_multiple_grad_list /= episode_per_update
+                if Teacher:
+                    # averaging everything with repect to episode per update, which is for purpose of averaging out
+                    average_out_ep_ret /= episode_per_update
+                    s_list /= episode_per_update
+                    s_multiple_grad_list /= episode_per_update
 
-                Teacher.record_grads(env.env.C, average_out_ep_ret, s_list, s_multiple_grad_list)
-                Teacher.update_episodes(average_out_ep_ret)
-                Teacher.set_env_params(env)
-            s_list = np.empty((0, env.env.number_C))
-            s_multiple_grad_list = np.empty((0, env.env.number_C))
+                    Teacher.record_grads(env.env.C, average_out_ep_ret, s_list, s_multiple_grad_list)
+                    Teacher.update_episodes(average_out_ep_ret)
+                    Teacher.set_env_params(env)
+                s_list = np.empty((0, env.env.number_C))
+                s_multiple_grad_list = np.empty((0, env.env.number_C))
 
         # Save model
         if (epoch % save_freq == 0) or (epoch == epochs - 1):
@@ -358,7 +359,10 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         logger.log_tabular('TestEpC0', with_min_and_max=True)
         logger.log_tabular('TestEpC1', with_min_and_max=True)
         logger.log_tabular('TestEpLen', average_only=True)
+
         logger.dump_tabular()
+    with open('C_dataset.npy', 'wb') as f:
+        np.save(f, np.array(Teacher.task_generator.C_dataset))
 
 
 if __name__ == '__main__':

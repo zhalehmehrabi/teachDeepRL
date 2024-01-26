@@ -217,6 +217,9 @@ class ALPLearningGMM():
         self.step_size = step_size
         self.learning_radio = learning_radio
         self.counter = 0
+
+        self.C_dataset = []
+
         # Init ALP computer
         self.alp_computer = EmpiricalALPLearningComputer(beta=beta, dataset=self.dataset_alps, n_C=self.number_C,
                                                          alpha=alpha)
@@ -305,6 +308,8 @@ class ALPLearningGMM():
             self.counter += 1
             if self.counter % self.learning_radio == 0:
                 self.GMM_or_Learning = 'GMM'
+        self.C_dataset.append(new_task)
+        print(f'new task : {new_task}')
         return new_task
 
     def dump(self, dump_dict):
