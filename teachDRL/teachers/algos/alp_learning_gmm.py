@@ -279,7 +279,6 @@ class ALPLearningGMM():
             # Random task sampling
             new_task = self.random_task_generator.sample()
             new_task = np.float32(scipy.special.softmax(new_task))
-            print("ajab")
         elif self.GMM_or_Learning == 'GMM':
             # ALP-based task sampling
 
@@ -305,7 +304,7 @@ class ALPLearningGMM():
             if self.counter % self.learning_radio == 0:
                 self.GMM_or_Learning = 'GMM'
         self.C_dataset.append(new_task)
-        print(f'new task : {new_task}')
+        # print(f'new task : {new_task}')
         return new_task
 
     def dump(self, dump_dict):

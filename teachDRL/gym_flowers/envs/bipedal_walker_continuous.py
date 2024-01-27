@@ -11,6 +11,7 @@
 #
 # Initially Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
 # Modified by Rémy Portelas, taking inspiration from https://eng.uber.com/poet-open-ended-deep-learning/
+import copy
 
 import numpy as np
 import Box2D
@@ -199,6 +200,8 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         self.C = np.zeros(self.number_C)
         low_C = np.zeros(self.number_C)
         high_C = np.ones(self.number_C)
+        self.position = None
+        self.old_position = None
         """ until here """
 
         # Update action space and observation space
@@ -515,11 +518,16 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
                 else:
                     self.joints[i].motorSpeed = float(self.SPEED_KNEE * np.sign(action[i]))
                 self.joints[i].maxMotorTorque = float(self.MOTORS_TORQUE * np.clip(np.abs(action[i]), 0, 1))
-
         self.world.Step(1.0 / FPS, 6 * 30, 2 * 30)
+
 
         pos = self.hull.position
         vel = self.hull.linearVelocity
+
+        self.old_position = self.position if self.position is not None else pos[0]
+        self.position = pos[0]
+
+        delta_pos_max_x = (self.SCALE) / (self.VIEWPORT_W * 0.3)
 
         for i in range(self.NB_LIDAR):
             self.lidar[i].fraction = 1.0
@@ -547,22 +555,15 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
 
         self.scroll = pos.x - self.VIEWPORT_W / self.SCALE / 5
 
-        reward, done = self._reward(pos, action, state)
+        reward, done = self._reward(pos, action, state, delta_pos_max_x)
 
         return self._add_C_to_state(np.array(state)), reward, done, {}
 
-    def _reward(self, pos, action, state):
-        c0 = 130 * pos[
-            0] / self.SCALE  # moving forward is a way to receive reward (normalized to get 300 on completion)
-        c1 = 5 - 5.0 * abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
-
-        # To make everything become reward, I initialize the values and let the mistakes reduce the reward
-        c2 = 20
-
-        for a in action:
-            c2 -= self.torque_penalty * self.MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
-            # normalized to about -50.0 using heuristic, more optimal agent should spend less
-
+    def _reward(self, pos, action, state, delta_pos_max_x):
+        c0 = (self.position - self.old_position)/delta_pos_max_x  # moving forward is a way to receive reward,
+        # normalized to get +1 on the maximum speed possible
+        c1 = state[2] # horizontal speed, range (-1, 1)
+        c2 = state[3] # vertical speed, range (-1, 1)
         c3 = 0
         done = False
         if self.head_contact or pos[0] < 0:
