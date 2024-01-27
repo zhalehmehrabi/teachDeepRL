@@ -124,13 +124,11 @@ class EmpiricalALPLearningComputer():
             lp1 = reward - c_prime_reward
 
             # Calculating the reward with C*, which means taking only the last element of reward feature(S)
-            # reward_c_star_task = np.sum(self.alp_knn.S_star_buf[index_current_C])
-            # reward_c_star_c_prime = np.sum(self.alp_knn.W_buf[indices][np.newaxis, :] @ self.alp_knn.S_star_buf[indices])
+            reward_c_star_task = np.sum(self.alp_knn.S_star_buf[index_current_C])
+            reward_c_star_c_prime = np.sum(self.alp_knn.W_buf[indices][np.newaxis, :] @ self.alp_knn.S_star_buf[indices])
 
-            # lp2 = reward_c_star_task - reward_c_star_c_prime
-
-            # alp = self.alpha * (np.abs(lp1)) + (1 - self.alpha) * np.abs(lp2)
-            alp = np.abs(lp1)
+            lp2 = reward_c_star_task - reward_c_star_c_prime
+            alp = self.alpha * (np.abs(lp1)) + (1 - self.alpha) * np.abs(lp2)
 
             # 2 - compute grad ALP with respect to C, which is task here.
 
@@ -145,17 +143,16 @@ class EmpiricalALPLearningComputer():
             # 2.3 - calculate the first element of second part of derivation
 
             # For creating an array which has the following shape [0, 0, ..., 0, 1]
-            # c_star = np.concatenate([np.zeros(self.number_C - 1), np.array([1.0])])
-            #
-            # c_star_s_multiply_grad_p_pi = np.multiply(c_star,self.alp_knn.S_multiply_grad_log_p_buf[index_current_C])
-            #
-            # # 2.4 - Calculating the second element of second part of derivative
-            # c_star_s_multiply_grad_p_pi_grad_c_wrt_c_prime = np.multiply(c_star,
-            #                                                              c_prime_s_multiply_grad_p_pi_grad_c_wrt_c_prime)
-            # grad_alp_part2 = c_star_s_multiply_grad_p_pi - c_star_s_multiply_grad_p_pi_grad_c_wrt_c_prime
+            c_star = np.concatenate([np.zeros(self.number_C - 1), np.array([1.0])])
 
-            # grad_alp = self.alpha * np.abs(grad_alp_part1) + (1 - self.alpha) * np.abs(grad_alp_part2)
-            grad_alp = np.abs(grad_alp_part1)
+            c_star_s_multiply_grad_p_pi = np.multiply(c_star,self.alp_knn.S_multiply_grad_log_p_buf[index_current_C])
+
+            # 2.4 - Calculating the second element of second part of derivative
+            c_star_s_multiply_grad_p_pi_grad_c_wrt_c_prime = np.multiply(c_star,
+                                                                         c_prime_s_multiply_grad_p_pi_grad_c_wrt_c_prime)
+            grad_alp_part2 = c_star_s_multiply_grad_p_pi - c_star_s_multiply_grad_p_pi_grad_c_wrt_c_prime
+
+            grad_alp = self.alpha * np.abs(grad_alp_part1) + (1 - self.alpha) * np.abs(grad_alp_part2)
 
             # c' zarb dar s_multi_grad_p_pi and zarb grad c' wrt c
         # Add to database
@@ -210,16 +207,14 @@ class ALPLearningGMM():
 
         """ A dataset to save the components needed for caluculating the ALP Learning GMM and its derivations"""
 
-        self.number_C = 2
+        self.number_C = 4
         self.dataset_alps = CDataset(self.number_C, alp_buffer_size)
         self.n_c_updates = n_c_updates
         self.GMM_or_Learning = 'GMM'
         self.step_size = step_size
         self.learning_radio = learning_radio
         self.counter = 0
-
         self.C_dataset = []
-
         # Init ALP computer
         self.alp_computer = EmpiricalALPLearningComputer(beta=beta, dataset=self.dataset_alps, n_C=self.number_C,
                                                          alpha=alpha)
@@ -284,6 +279,7 @@ class ALPLearningGMM():
             # Random task sampling
             new_task = self.random_task_generator.sample()
             new_task = np.float32(scipy.special.softmax(new_task))
+            print("ajab")
         elif self.GMM_or_Learning == 'GMM':
             # ALP-based task sampling
 

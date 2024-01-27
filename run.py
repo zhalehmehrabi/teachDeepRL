@@ -128,7 +128,7 @@ if not args.shaped_reward:
     if args.stump_seq:
         param_env_bounds['stump_seq'] = [0, 6.0, 10]
 else:
-    param_env_bounds['C'] = [0, 1, 2]
+    param_env_bounds['C'] = [0, 1, 4]
 
 
 
