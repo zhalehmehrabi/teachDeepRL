@@ -295,7 +295,9 @@ class EpochLogger(Logger):
             if not(k in self.epoch_dict.keys()):
                 self.epoch_dict[k] = []
             self.epoch_dict[k].append(v)
-
+    def store_C_dataset(self, C_dataset):
+        with open(self.output_dir + '/C_dataset.npy', 'wb') as f:
+            np.save(f, C_dataset)
     def log_tabular(self, key, val=None, with_min_and_max=False, average_only=False):
         """
         Log a value or possibly the mean/std/min/max values of a diagnostic.

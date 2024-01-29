@@ -640,7 +640,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
 if __name__ == "__main__":
     # Heurisic: suboptimal, have no notion of balance.
     env = BipedalWalkerContinuous()
-    env.set_environment()
+    env.set_environment({'C':[0.5,0.5]})
     env.reset()
     steps = 0
     total_reward = 0

@@ -361,8 +361,7 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         logger.log_tabular('TestEpLen', average_only=True)
 
         logger.dump_tabular()
-        with open('C_dataset.npy', 'wb') as f:
-            np.save(f, np.array(Teacher.task_generator.C_dataset))
+        logger.store_C_dataset(np.array(Teacher.task_generator.C_dataset))
 
 
 if __name__ == '__main__':
