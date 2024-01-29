@@ -284,6 +284,7 @@ class ALPLearningGMM():
             # Random task sampling
             new_task = self.random_task_generator.sample()
             new_task = np.float32(scipy.special.softmax(new_task))
+            self.counter = 0
         elif self.GMM_or_Learning == 'GMM':
             # ALP-based task sampling
 

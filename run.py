@@ -55,6 +55,8 @@ parser.add_argument('--alpha', type=float, default=0.5)
 parser.add_argument('--step_size', type=float, default=0.001)
 # this value shows how many learning steps must be done before sampling again from GMM
 parser.add_argument('--learning_radio', type=int, default=2)
+# This values is the value for taking random steps instead of taking from GMM or Learning algorithm
+parser.add_argument('--random_task_ratio', type=float, default=0.1)
 
 
 # Parameterized bipedal walker arguments, so far only works with bipedal-walker-continuous-v0
@@ -135,6 +137,8 @@ else:
 # Set Teacher hyperparameters
 params = {}
 if args.teacher == 'ALP-GMM' or args.teacher == "ALP-Learning-GMM":
+    if args.random_task_ratio is not None:
+        params['random_task_ratio'] = args.random_task_ratio
     if args.gmm_fitness_fun is not None:
         params['gmm_fitness_fun'] = args.gmm_fitness_fun
     if args.min_k is not None and args.max_k is not None:
