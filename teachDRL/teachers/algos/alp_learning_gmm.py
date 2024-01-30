@@ -280,12 +280,13 @@ class ALPLearningGMM():
                 self.bk['episodes'].append(len(self.tasks))
 
     def sample_task(self):
-        if (len(self.tasks) < self.nb_random) or (np.random.random() < self.random_task_ratio):
+        if (len(self.tasks) < self.nb_random):
             # Random task sampling
             new_task = self.random_task_generator.sample()
             new_task = np.float32(scipy.special.softmax(new_task))
             self.counter = 0
-        elif self.GMM_or_Learning == 'GMM':
+            print(f'Random : {new_task}')
+        elif self.GMM_or_Learning == 'GMM' or (np.random.random() < self.random_task_ratio):
             # ALP-based task sampling
 
             # 1 - Retrieve the mean ALP value of each Gaussian in the GMM
@@ -303,14 +304,17 @@ class ALPLearningGMM():
             # instead of clipping, we do the softmax to take everything between 0 and 1 with the sum to 1.
             new_task = np.float32(scipy.special.softmax(new_task))
             self.GMM_or_Learning = 'Learning'
+            print(f'GMM : {new_task}')
+
         else:
             new_task = self.tasks[-1] + self.n_c_updates * self.step_size * np.squeeze(self.grad_alps[-1])
             new_task = np.float32(scipy.special.softmax(new_task))
-            self.counter += 1
-            if self.counter % self.learning_radio == 0:
-                self.GMM_or_Learning = 'GMM'
+            # self.counter += 1
+            # if self.counter % self.learning_radio == 0:
+            #     self.GMM_or_Learning = 'GMM'
+            print(f'ALP learning : {new_task}')
+
         self.C_dataset.append(new_task)
-        print(f'new task : {new_task}')
         return new_task
 
     def dump(self, dump_dict):
