@@ -97,7 +97,7 @@ class EmpiricalALPLearningComputer():
 
     def compute_alp(self, task, reward):
         alp = 0
-        grad_alp = 0
+        grad_alp = [np.zeros(self.number_C)]
         if self.alp_knn.size > 5:
             # Compute absolute learning progress for new task
 
@@ -195,7 +195,7 @@ class ALPLearningGMM():
 
         # Maximal number of episodes to account for when computing ALP
         alp_max_size = None if "alp_max_size" not in params else params["alp_max_size"]
-        alp_buffer_size = 500 if "alp_buffer_size" not in params else params["alp_buffer_size"]
+        alp_buffer_size = 50 if "alp_buffer_size" not in params else params["alp_buffer_size"]
 
         self.tasks = []
         self.alps = []
@@ -243,6 +243,8 @@ class ALPLearningGMM():
         alp, grad_alp = self.alp_computer.compute_alp(task, reward)
         self.alps.append(alp)
         self.grad_alps.append(grad_alp)
+        self.C_dataset[-1][0][2] = alp
+        self.C_dataset[-1].append(grad_alp)
         # Concatenate task vector with ALP dimension
         self.tasks_alps.append(np.array(task.tolist() + [self.alps[-1]]))
 
@@ -313,7 +315,7 @@ class ALPLearningGMM():
                 self.GMM_or_Learning = 'GMM'
             print(f'Learning : {new_task}')
 
-        self.C_dataset.append(new_task)
+        self.C_dataset.append([np.concatenate([new_task, np.zeros(1)])])
         # print(f'new task : {new_task}')
         return new_task
 
