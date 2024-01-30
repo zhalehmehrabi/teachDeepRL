@@ -322,7 +322,7 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
                 episode_update_processed = True
 
                 if Teacher:
-                    # averaging everything with repect to episode per update, which is for purpose of averaging out
+                    # averaging everything with respect to episode per update, which is for purpose of averaging out
                     average_out_ep_ret /= episode_per_update
                     s_list /= episode_per_update
                     s_multiple_grad_list /= episode_per_update

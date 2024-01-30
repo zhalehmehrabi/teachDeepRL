@@ -245,6 +245,7 @@ class ALPLearningGMM():
         self.grad_alps.append(grad_alp)
         self.C_dataset[-1][0][2] = alp
         self.C_dataset[-1].append(grad_alp)
+        print(f' ALP: {alp}, grad: {grad_alp}\n\n')
         # Concatenate task vector with ALP dimension
         self.tasks_alps.append(np.array(task.tolist() + [self.alps[-1]]))
 
