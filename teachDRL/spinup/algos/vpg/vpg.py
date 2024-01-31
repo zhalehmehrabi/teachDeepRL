@@ -157,7 +157,7 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
     logger = EpochLogger(**logger_kwargs)
     hyperparams = locals()
     if Teacher: del hyperparams['Teacher']  # remove teacher to avoid serialization error
-   # logger.save_config(hyperparams)#TODO, have to uncomment
+    logger.save_config(hyperparams)#TODO, have to uncomment
 
     seed += 10000 * proc_id()
     tf.set_random_seed(seed)
