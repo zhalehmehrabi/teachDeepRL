@@ -12,6 +12,7 @@ from teachDRL.spinup.utils.mpi_tools import mpi_fork
 from collections import OrderedDict
 import os
 import numpy as np
+
 # from teachDRL.spinup.algos.gpomdp import gpomdp
 
 # Argument definition
@@ -20,7 +21,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--exp_name', type=str, default='test')
 parser.add_argument('--seed', '-s', type=int, default=0)
 parser.add_argument('--algorithm', type=str, default='GPOMDP')
-
 
 # Deep RL student arguments, so far only works with SAC
 parser.add_argument('--hid', type=int, default=-1)  # number of neurons in hidden layers
@@ -40,8 +40,6 @@ parser.add_argument('--batch_size', type=int, default=1000)
 #
 parser.add_argument('--cpu', type=int, default=1)
 
-
-
 # Parameters for ALP Learning GMM
 # this is the number of student episodes before doing an update to on C
 parser.add_argument('--episode_per_update', type=int, default=100)
@@ -58,13 +56,11 @@ parser.add_argument('--learning_radio', type=int, default=2)
 # This values is the value for taking random steps instead of taking from GMM or Learning algorithm
 parser.add_argument('--random_task_ratio', type=float, default=0.1)
 
-
 # Parameterized bipedal walker arguments, so far only works with bipedal-walker-continuous-v0
 parser.add_argument('--env', type=str, default="bipedal-walker-continuous-v0")
 
 # Choose student (walker morphology)
 parser.add_argument('--leg_size', type=str, default="default")  # choose walker type ("short", "default" or "quadru")
-
 
 # Selection of parameter space
 # So far 3 choices: "--max_stump_h 3.0 --max_obstacle_spacing 6.0" (aka Stump Tracks) or "-hexa" (aka Hexagon Tracks)
@@ -82,7 +78,7 @@ parser.add_argument('--stump_seq', '-seq', action='store_true')
 parser.add_argument('--shaped_reward', action='store_true')
 
 # Teacher-specific arguments:
-parser.add_argument('--teacher', type=str, default="ALP-GMM")  # ALP-GMM, Covar-GMM, RIAC, Oracle, Random
+parser.add_argument('--teacher', type=str)  # ALP-GMM, Covar-GMM, RIAC, Oracle, Random
 parser.add_argument('--new_formula', action='store_true')  # ALP-GMM, Covar-GMM, RIAC, Oracle, Random
 
 # ALPGMM (Absolute Learning Progress - Gaussian Mixture Model) related arguments
@@ -131,8 +127,6 @@ if not args.shaped_reward:
         param_env_bounds['stump_seq'] = [0, 6.0, 10]
 else:
     param_env_bounds['C'] = [0, 20, 2]
-
-
 
 # Set Teacher hyperparameters
 params = {}
@@ -189,21 +183,28 @@ env_init['stump_seq'] = [0, 6.0, 10] if args.stump_seq else None
 
 
 # Initialize teacher
-Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bounds, alpha=args.alpha,beta=args.beta,
-                            seed=args.seed, teacher_params=params, n_c_updates=args.n_C_updates,
-                            step_size=args.step_size, learning_radio=args.learning_radio, new_formula=args.new_formula)
-
+if args.teacher is not None:
+    Teacher = TeacherController(args.teacher, args.nb_test_episodes, param_env_bounds, alpha=args.alpha, beta=args.beta,
+                                seed=args.seed, teacher_params=params, n_c_updates=args.n_C_updates,
+                                step_size=args.step_size, learning_radio=args.learning_radio,
+                                new_formula=args.new_formula)
+else:
+    Teacher = None
 if args.algorithm == 'SAC':
     # Launch Student training
-    sac(env_f, actor_critic=sac_core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed, epochs=args.epochs,
+    sac(env_f, actor_critic=sac_core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed,
+        epochs=args.epochs,
         logger_kwargs=logger_kwargs, alpha=args.ent_coef, max_ep_len=args.max_ep_len, steps_per_epoch=args.steps_per_ep,
-        replay_size=args.buf_size, env_init=env_init, env_name=args.env, nb_test_episodes=args.nb_test_episodes, lr=args.lr,
+        replay_size=args.buf_size, env_init=env_init, env_name=args.env, nb_test_episodes=args.nb_test_episodes,
+        lr=args.lr,
         train_freq=args.train_freq, batch_size=args.batch_size, episode_per_update=args.episode_per_update,
         n_C_updates=args.n_C_updates, Teacher=Teacher)
 elif args.algorithm == 'GPOMDP':
-    sac(env_f, actor_critic=sac_core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed, epochs=args.epochs,
+    sac(env_f, actor_critic=sac_core.mlp_actor_critic, ac_kwargs=ac_kwargs, gamma=args.gamma, seed=args.seed,
+        epochs=args.epochs,
         logger_kwargs=logger_kwargs, alpha=args.ent_coef, max_ep_len=args.max_ep_len, steps_per_epoch=args.steps_per_ep,
-        replay_size=args.buf_size, env_init=env_init, env_name=args.env, nb_test_episodes=args.nb_test_episodes, lr=args.lr,
+        replay_size=args.buf_size, env_init=env_init, env_name=args.env, nb_test_episodes=args.nb_test_episodes,
+        lr=args.lr,
         train_freq=args.train_freq, batch_size=args.batch_size, episode_per_update=args.episode_per_update,
         n_C_updates=args.n_C_updates, Teacher=Teacher)
 elif args.algorithm == 'VPG':

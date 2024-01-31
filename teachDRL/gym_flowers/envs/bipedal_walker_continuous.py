@@ -20,6 +20,7 @@ from gym import spaces
 from gym.utils import colorize, seeding, EzPickle
 import math
 from copy import deepcopy
+from teachDRL.spinup.utils.test_policy import load_policy
 
 
 class ContactDetector(contactListener):
@@ -636,12 +637,26 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
             self.viewer.close()
             self.viewer = None
 
-
 if __name__ == "__main__":
     # Heurisic: suboptimal, have no notion of balance.
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('fpath', type=str)
+    parser.add_argument('--len', '-l', type=int, default=0)
+    parser.add_argument('--episodes', '-n', type=int, default=100)
+    parser.add_argument('--norender', '-nr', action='store_true')
+    parser.add_argument('--itr', '-i', type=int, default=-1)
+    parser.add_argument('--deterministic', '-d', action='store_true')
+    args = parser.parse_args()
+    _, get_action = load_policy(args.fpath,
+                                  args.itr if args.itr >=0 else 'last',
+                                  args.deterministic)
+    env_init = {'hexa_shape': False, 'leg_size': 'default', 'obstacle_spacing': 8.0, 'poly_shape': None, 'roughness': 0,
+     'stump_height': [0.5, 0.1], 'stump_rot': None, 'stump_seq': None, 'stump_width': None}
     env = BipedalWalkerContinuous()
-    env.set_environment({'C':[0.5,0.5]})
-    env.reset()
+    env.my_init(env_init)
+    env.set_environment(np.array([0.6,0.4]))
+    s = env.reset()
     steps = 0
     total_reward = 0
     a = np.array([0.0, 0.0, 0.0, 0.0])
@@ -653,14 +668,14 @@ if __name__ == "__main__":
     SUPPORT_KNEE_ANGLE = +0.1
     supporting_knee_angle = SUPPORT_KNEE_ANGLE
     while True:
-        s, r, done, info = env.step(a)
+        s, r, done, info = env.step(get_action(s))
         total_reward += r
         if steps % 20 == 0 or done:
             print("\naction " + str(["{:+0.2f}".format(x) for x in a]))
-            print("step {} total_reward {:+0.2f}".format(steps, total_reward))
-            print("hull " + str(["{:+0.2f}".format(x) for x in s[0:4]]))
-            print("leg0 " + str(["{:+0.2f}".format(x) for x in s[4:9]]))
-            print("leg1 " + str(["{:+0.2f}".format(x) for x in s[9:14]]))
+            print(f"step {steps} total_reward {r}")
+            # print("hull " + str(["{:+0.2f}".format(x) for x in s[0:4]]))
+            # print("leg0 " + str(["{:+0.2f}".format(x) for x in s[4:9]]))
+            # print("leg1 " + str(["{:+0.2f}".format(x) for x in s[9:14]]))
         steps += 1
 
         contact0 = s[8]

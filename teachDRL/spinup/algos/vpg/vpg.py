@@ -170,7 +170,13 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         env.env.my_init(env_init)
         test_env.env.my_init(env_init)
 
-    if Teacher: Teacher.set_env_params(env)
+    if Teacher:
+        Teacher.set_env_params(env)
+    else:
+        param_dict = {'C':[0.5,0.5]}
+        env.env.set_environment(**param_dict)
+        test_env.env.set_environment(**param_dict)
+
     env.reset()
 
     obs_dim = env.env.observation_space.shape
@@ -312,7 +318,7 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
                     # only save EpRet / EpLen if trajectory finished
                     logger.store(EpRet=ep_ret, EpLen=ep_len)
                     average_out_ep_ret += ep_ret
-                    Teacher.record_train_episode(ep_ret, ep_len)
+                    if Teacher: Teacher.record_train_episode(ep_ret, ep_len)
 
                 o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
                 episode_update_processed = False
@@ -361,7 +367,7 @@ def vpg(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         logger.log_tabular('TestEpLen', average_only=True)
 
         logger.dump_tabular()
-        logger.store_C_dataset(np.array(Teacher.task_generator.C_dataset))
+        if Teacher: logger.store_C_dataset(np.array(Teacher.task_generator.C_dataset))
 
 
 if __name__ == '__main__':
