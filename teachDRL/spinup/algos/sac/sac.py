@@ -148,7 +148,12 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         env.env.my_init(env_init)
         test_env.env.my_init(env_init)
 
-    if Teacher: Teacher.set_env_params(env)
+    if Teacher:
+        Teacher.set_env_params(env)
+    else:
+        param_dict = {'C':[0.5,0.5]}
+        env.env.set_environment(**param_dict)
+        test_env.env.set_environment(**param_dict)
     env.reset()
 
     obs_dim = env.env.observation_space.shape[0]
