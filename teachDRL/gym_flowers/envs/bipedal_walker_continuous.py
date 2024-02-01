@@ -575,8 +575,8 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
 
         done = False
         if self.head_contact or self.leg_contact or pos[0] < 0:
-            c0 = -1
-            c1 = -1
+            c0 = -100
+            c1 = -100
             done = True
         if pos[0] > (self.TERRAIN_LENGTH - self.TERRAIN_GRASS) * self.TERRAIN_STEP:
             done = True
