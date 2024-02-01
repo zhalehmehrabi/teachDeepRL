@@ -323,7 +323,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
                 #              VVals=outs[6], LogPi=outs[7])
             logger.store(EpRet=ep_ret, EpLen=ep_len)
             average_out_ep_ret += ep_ret
-            Teacher.record_train_episode(ep_ret, ep_len)
+            if Teacher: Teacher.record_train_episode(ep_ret, ep_len)
 
             o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
             episode_update_processed = False
