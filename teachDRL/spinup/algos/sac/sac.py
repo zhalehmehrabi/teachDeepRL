@@ -152,6 +152,7 @@ def sac(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         Teacher.set_env_params(env)
     else:
         param_dict = {'C':[0.5,0.5]}
+        param_dict = {'C':[1,0]}
         env.env.set_environment(**param_dict)
         test_env.env.set_environment(**param_dict)
     env.reset()
