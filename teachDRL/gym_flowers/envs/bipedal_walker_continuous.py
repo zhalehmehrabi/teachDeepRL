@@ -594,13 +594,15 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         c1 = state[2]
 
         done = False
-        head_contact = state[6]
-        leg_contact = state[7]
+        head_contact = state[7]
+        leg_contact = state[8]
         if head_contact or leg_contact or state[0] < 0:
             c0 = -100
             c1 = -100
             done = True
         if state[0] > 1:
+            c0 = 100
+            c1 = 100
             done = True
 
         reward = np.array([c0, c1])
