@@ -480,6 +480,9 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         self.scroll = 0.0
         self.lidar_render = 0
 
+        self.position = None
+        self.old_position = None
+
         W = self.VIEWPORT_W / self.SCALE
         H = self.VIEWPORT_H / self.SCALE
 
@@ -528,7 +531,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         self.position = pos[0]
 
         delta_pos_max_x = (self.SCALE) / (self.VIEWPORT_W * 0.3)
-
+        max_pos_x = (self.TERRAIN_LENGTH - self.TERRAIN_GRASS) * self.TERRAIN_STEP
         for i in range(self.NB_LIDAR):
             self.lidar[i].fraction = 1.0
             self.lidar[i].p1 = pos
