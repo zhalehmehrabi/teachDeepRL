@@ -21,6 +21,7 @@ from gym.utils import colorize, seeding, EzPickle
 import math
 from copy import deepcopy
 from teachDRL.spinup.utils.test_policy import load_policy
+from sklearn.preprocessing import MinMaxScaler
 
 
 class ContactDetector(contactListener):
@@ -38,8 +39,6 @@ class ContactDetector(contactListener):
             if leg in [contact.fixtureA.body, contact.fixtureB.body]:
                 if contact.fixtureA.body in self.env.stumps or contact.fixtureB.body in self.env.stumps:
                     self.env.leg_contact = True
-
-
 
     def EndContact(self, contact):
         for leg in [self.env.legs[1], self.env.legs[3]]:
@@ -207,6 +206,9 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         self.C = np.zeros(self.number_C)
         low_C = np.zeros(self.number_C)
         high_C = np.ones(self.number_C)
+
+        self.position = None
+        self.old_position = None
         """ until here """
 
         # Update action space and observation space
@@ -493,6 +495,9 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         W = self.VIEWPORT_W / self.SCALE
         H = self.VIEWPORT_H / self.SCALE
 
+        self.position = None
+        self.old_position = None
+
         self.draw_walker()
 
         self.drawlist = self.terrain + self.legs + [self.hull]
@@ -534,6 +539,17 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         pos = self.hull.position
         vel = self.hull.linearVelocity
 
+        self.old_position = self.position if self.position is not None else pos[0]
+        self.position = pos[0]
+
+        delta_pos_max_x = (self.SCALE) / (self.VIEWPORT_W * 0.3)
+        max_pos_x = (self.TERRAIN_LENGTH - self.TERRAIN_GRASS) * self.TERRAIN_STEP
+
+        normal_pos_x = self.position / max_pos_x
+        init_y = (self.TERRAIN_HEIGHT + 2 * self.LEG_H)
+        min_y = init_y - 0.4
+        max_y = init_y + 0.4
+        normal_pos_y = self.map_to_range(pos[1], min_y, max_y)
         for i in range(self.NB_LIDAR):
             self.lidar[i].fraction = 1.0
             self.lidar[i].p1 = pos
@@ -542,10 +558,15 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
                 pos[1] - math.cos(1.5 * i / self.NB_LIDAR) * self.LIDAR_RANGE)
             self.world.RayCast(self.lidar[i], self.lidar[i].p1, self.lidar[i].p2)
         state = [
+            normal_pos_x,
+            normal_pos_y,
             self.hull.angle,  # Normal angles up to 0.5 here, but sure more is possible.
             2.0 * self.hull.angularVelocity / FPS,
             0.3 * vel.x * (self.VIEWPORT_W / self.SCALE) / FPS,  # Normalized to get -1..1 range
-            0.3 * vel.y * (self.VIEWPORT_H / self.SCALE) / FPS]
+            0.3 * vel.y * (self.VIEWPORT_H / self.SCALE) / FPS,
+            self.head_contact,  # if head contacts the ground
+            self.leg_contact  # if any leg contacts a barrier
+        ]
 
         # add leg-related state
         for i in range(0, len(self.legs), 2):
@@ -556,29 +577,29 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
                       1.0 if self.legs[i + 1].ground_contact else 0.0]
 
         state += [l.fraction for l in self.lidar]
-        assert len(state) == (4 + 5 * self.nb_leg_pairs * 2 + self.NB_LIDAR)
+        assert len(state) == (8 + 5 * self.nb_leg_pairs * 2 + self.NB_LIDAR)
 
         self.scroll = pos.x - self.VIEWPORT_W / self.SCALE / 5
 
-        reward, done = self._reward(pos, action, state)
+        reward, done = self._reward(action, state)
 
         return self._add_C_to_state(np.array(state)), reward, done, {}
 
-    def _reward(self, pos, action, state):
-        c0 = state[2]  # horizontal speed, range (-1, 1)
-        init_y = self.TERRAIN_HEIGHT + 2 * self.LEG_H
-        if pos[1] > init_y:
-            c1 = abs(state[3])/2  # vertical speed, since every upward jump, has a downward fall, I get the abs and
-            # devided by two to be normal again
-        else:
-            c1 = 0
+    def _reward(self, action, state):
+        # c0 = (self.position - self.old_position) / delta_pos_max_x
+        c0 = state[0]
+        # c0 = state[2]  # horizontal speed, range (-1, 1)
+        # init_y = (self.TERRAIN_HEIGHT + 2 * self.LEG_H)
+        c1 = state[1]
 
         done = False
-        if self.head_contact or self.leg_contact or pos[0] < 0:
+        head_contact = state[6]
+        leg_contact = state[7]
+        if head_contact or leg_contact or state[0] < 0:
             c0 = -100
             c1 = -100
             done = True
-        if pos[0] > (self.TERRAIN_LENGTH - self.TERRAIN_GRASS) * self.TERRAIN_STEP:
+        if state[0] > 1:
             done = True
 
         reward = np.array([c0, c1])
@@ -632,14 +653,19 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
 
         return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
+    def map_to_range(self, x, minb, maxb):
+        return -1 + 2 * (x - minb) / (maxb - minb)
+
     def close(self):
         if self.viewer is not None:
             self.viewer.close()
             self.viewer = None
 
+
 if __name__ == "__main__":
     # Heurisic: suboptimal, have no notion of balance.
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('fpath', type=str)
     parser.add_argument('--len', '-l', type=int, default=0)
@@ -649,13 +675,13 @@ if __name__ == "__main__":
     parser.add_argument('--deterministic', '-d', action='store_true')
     args = parser.parse_args()
     _, get_action = load_policy(args.fpath,
-                                  args.itr if args.itr >=0 else 'last',
-                                  args.deterministic)
+                                args.itr if args.itr >= 0 else 'last',
+                                args.deterministic)
     env_init = {'hexa_shape': False, 'leg_size': 'default', 'obstacle_spacing': 8.0, 'poly_shape': None, 'roughness': 0,
-     'stump_height': [0.5, 0.1], 'stump_rot': None, 'stump_seq': None, 'stump_width': None}
+                'stump_height': [0.5, 0.1], 'stump_rot': None, 'stump_seq': None, 'stump_width': None}
     env = BipedalWalkerContinuous()
     env.my_init(env_init)
-    env.set_environment(np.array([0.6,0.4]))
+    env.set_environment(np.array([0.6, 0.4]))
     s = env.reset()
     steps = 0
     total_reward = 0
