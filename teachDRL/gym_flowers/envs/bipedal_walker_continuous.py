@@ -153,7 +153,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
 
         self.action_space = spaces.Box(np.array([-1] * self.nb_leg_pairs * 4),
                                        np.array([1] * self.nb_leg_pairs * 4), dtype=np.float32)
-        high = np.array([np.inf] * (18 + self.NB_LIDAR))
+        high = np.array([np.inf] * (19 + self.NB_LIDAR))
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
         self.torque_penalty = 0.00035
 
@@ -214,7 +214,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         # Update action space and observation space
         self.action_space = spaces.Box(np.array([-1] * self.nb_leg_pairs * 4),
                                        np.array([1] * self.nb_leg_pairs * 4), dtype=np.float32)
-        high = np.array([np.inf] * (8 + self.nb_leg_pairs * 2 * 5 + self.NB_LIDAR))
+        high = np.array([np.inf] * (9 + self.nb_leg_pairs * 2 * 5 + self.NB_LIDAR))
         self.observation_space = spaces.Box(np.concatenate([-high, low_C]), np.concatenate([high, high_C]),
                                             dtype=np.float32)
 
@@ -539,17 +539,17 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
         pos = self.hull.position
         vel = self.hull.linearVelocity
 
-        self.old_position = self.position if self.position is not None else pos[0]
-        self.position = pos[0]
-
         delta_pos_max_x = (self.SCALE) / (self.VIEWPORT_W * 0.3)
         max_pos_x = (self.TERRAIN_LENGTH - self.TERRAIN_GRASS) * self.TERRAIN_STEP
 
-        normal_pos_x = self.position / max_pos_x
+        normal_pos_x = pos[0] / max_pos_x
         init_y = (self.TERRAIN_HEIGHT + 2 * self.LEG_H)
         min_y = init_y - 0.4
         max_y = init_y + 0.4
         normal_pos_y = self.map_to_range(pos[1], min_y, max_y)
+        self.old_position = self.position if self.position is not None else np.array([normal_pos_x, normal_pos_y])
+        self.position = np.array([normal_pos_x, normal_pos_y])
+
         for i in range(self.NB_LIDAR):
             self.lidar[i].fraction = 1.0
             self.lidar[i].p1 = pos
@@ -559,6 +559,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
             self.world.RayCast(self.lidar[i], self.lidar[i].p1, self.lidar[i].p2)
         state = [
             normal_pos_x,
+            self.old_position[0],
             normal_pos_y,
             self.hull.angle,  # Normal angles up to 0.5 here, but sure more is possible.
             2.0 * self.hull.angularVelocity / FPS,
@@ -577,7 +578,7 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
                       1.0 if self.legs[i + 1].ground_contact else 0.0]
 
         state += [l.fraction for l in self.lidar]
-        assert len(state) == (8 + 5 * self.nb_leg_pairs * 2 + self.NB_LIDAR)
+        assert len(state) == (9 + 5 * self.nb_leg_pairs * 2 + self.NB_LIDAR)
 
         self.scroll = pos.x - self.VIEWPORT_W / self.SCALE / 5
 
@@ -587,10 +588,10 @@ class BipedalWalkerContinuous(gym.Env, EzPickle):
 
     def _reward(self, action, state):
         # c0 = (self.position - self.old_position) / delta_pos_max_x
-        c0 = state[0]
+        c0 = state[0] - state[1]
         # c0 = state[2]  # horizontal speed, range (-1, 1)
         # init_y = (self.TERRAIN_HEIGHT + 2 * self.LEG_H)
-        c1 = state[1]
+        c1 = state[2]
 
         done = False
         head_contact = state[6]
