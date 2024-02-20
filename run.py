@@ -11,7 +11,6 @@ from teachDRL.teachers.teacher_controller import TeacherController
 from collections import OrderedDict
 import os
 import numpy as np
-from my_scripts.env_creator_for_TDRL import main
 from my_scripts.screipt_utils import create_log_directory, get_callbacks
 import random
 from omegaconf import OmegaConf
