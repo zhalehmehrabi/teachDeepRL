@@ -1,0 +1,8 @@
+alg: ALP-GMM
+gmm_fitness_fun:
+nb_em_init:
+min_k:
+max_k:
+fit_rate:
+weighted_gmm:
+alp_max_size:
