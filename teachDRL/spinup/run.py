@@ -220,7 +220,7 @@ if __name__ == '__main__':
 
     elif cmd in valid_utils:
         # Execute the correct utility file.
-        runfile = osp.join(osp.abspath(osp.dirname(__file__)), 'utils', cmd +'.py')
+        runfile = osp.join(osp.abspath(osp.dirname(__file__)), 'screipt_utils', cmd +'.py')
         args = [sys.executable if sys.executable else 'python3.6', runfile] + sys.argv[2:]
         subprocess.check_call(args, env=os.environ)
     else:

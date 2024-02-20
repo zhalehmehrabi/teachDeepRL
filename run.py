@@ -2,7 +2,7 @@ import argparse
 
 import hydra
 
-# from teachDRL.spinup.utils.run_utils import setup_logger_kwargs
+# from teachDRL.spinup.screipt_utils.run_utils import setup_logger_kwargs
 # from teachDRL.spinup.algos.sac.sac import sac
 # from teachDRL.spinup.algos.sac import core
 import gym
@@ -12,7 +12,7 @@ from collections import OrderedDict
 import os
 import numpy as np
 from my_scripts.env_creator_for_TDRL import main
-from my_scripts.utils import create_log_directory, get_callbacks
+from my_scripts.screipt_utils import create_log_directory, get_callbacks
 import random
 from omegaconf import OmegaConf
 from utils.env_utils import create_producer
@@ -166,6 +166,7 @@ def main(cfg):
 
     env_producer = create_producer(seed=seed, **env_args)
     env = make_vec_env(env_producer,
+                       seed=seed,
                        n_envs=cfg['parallel'],
                        vec_env_cls=SubprocVecEnv,
                        monitor_dir=log_dir,

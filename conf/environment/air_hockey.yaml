@@ -1,7 +1,7 @@
 env: 7dof-defend
 shaped_reward: True
 large_reward: 1000
-large_penalty: 100
+large_penalty: 1000
 alpha_r: 0
 c_r: 0
 history: 0
