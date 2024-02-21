@@ -132,7 +132,7 @@ class TeacherController(object):
         params_spheral = copy.copy(self.task_generator.sample_task())
         params = self.hyperspherical_to_cartesian(params_spheral)
         assert type(params[0]) == np.float32
-        self.env_params_train.append(params)
+        self.env_params_train.append(params_spheral)
         param_dict = param_vec_to_param_dict(self.param_env_bounds, params)
         return param_dict
 

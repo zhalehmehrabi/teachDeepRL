@@ -80,7 +80,7 @@ log_interval: 10
 exp_name: sde_alpha100
 nb_reward_coeff: 4
 init_reward_coeff_mode: target
-parallel: 1
+parallel: 2
 epochs: 100
 max_episode_len: 500
 steps_per_epoch: 50000
