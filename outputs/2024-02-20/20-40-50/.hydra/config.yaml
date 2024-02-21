@@ -1,0 +1,88 @@
+callbacks:
+  custom_eval:
+    eval_freq: 1000
+    n_eval_episodes: 20
+    info_keywords:
+    - joint_pos_constr
+    - joint_vel_constr
+    - ee_constr
+    - link_constr
+  checkpoint:
+    save_freq: 4000
+    save_path: checkpoints
+    name_prefix: ckpt
+    save_replay_buffer: true
+  info_log:
+    log_freq: 1
+    info_keywords:
+    - joint_pos_constr
+    - joint_vel_constr
+    - ee_constr
+  teacher:
+    name: ajab
+algorithm:
+  alg: sac
+  policy: MlpPolicy
+  learning_rate: 0.001
+  buffer_size: 2000000
+  learning_starts: 1000
+  batch_size: 1000
+  tau: 0.005
+  gamma: 0.997
+  train_freq:
+  - 10
+  - step
+  gradient_steps: 1
+  optimize_memory_usage: false
+  ent_coef: auto
+  target_update_interval: 1
+  target_entropy: auto
+  use_sde: true
+  sde_sample_freq: -1
+  stats_window_size: 100
+  tensorboard_log: ./
+  verbose: 1
+  device: auto
+  _init_setup_model: true
+environment:
+  env: 7dof-defend
+  shaped_reward: true
+  large_reward: 1000
+  large_penalty: 1000
+  alpha_r: 0
+  c_r: 0
+  history: 0
+  stop_after_hit: true
+  whole_game_reward: false
+  load_second_agent: false
+  dont_include_timer_in_states: true
+  action_persistence: 5
+  stop_when_puck_otherside: false
+  start_from_defend: true
+  start_curriculum_transition: 10
+  end_curriculum_transition: 10
+  curriculum_transition: false
+teacher:
+  alg: ALP-GMM
+  gmm_fitness_fun: null
+  nb_em_init: null
+  min_k: null
+  max_k: null
+  fit_rate: null
+  weighted_gmm: null
+  alp_max_size: null
+hydra.output_subdir: null
+learn:
+  total_timesteps: 50000000
+seed: 42
+log_dir: /data/air_hockey/amir/logs
+log_interval: 10
+exp_name: sde_alpha100
+nb_reward_coeff: 4
+init_reward_coeff_mode: target
+parallel: 20
+epochs: 100
+max_episode_len: 500
+steps_per_epoch: 50000
+nb_test_episodes: 50
+env: air_hockey

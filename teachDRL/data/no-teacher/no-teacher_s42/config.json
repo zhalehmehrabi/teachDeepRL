@@ -1,0 +1,55 @@
+{
+    "Teacher":	null,
+    "ac_kwargs":	{},
+    "actor_critic":	"mlp_actor_critic",
+    "env_fn":	"<function <lambda> at 0x7f60b63b3ef0>",
+    "env_init":	{
+        "hexa_shape":	false,
+        "leg_size":	"default",
+        "obstacle_spacing":	8.0,
+        "poly_shape":	null,
+        "roughness":	0,
+        "stump_height":	[
+            0.5,
+            0.1
+        ],
+        "stump_rot":	null,
+        "stump_seq":	null,
+        "stump_width":	null
+    },
+    "env_name":	"bipedal-walker-continuous-v0",
+    "episode_per_update":	2,
+    "epochs":	100,
+    "exp_name":	"no-teacher",
+    "gamma":	0.99,
+    "lam":	0.97,
+    "logger":	{
+        "<teachDRL.spinup.utils.logx.EpochLogger object at 0x7f60b5116e10>":	{
+            "epoch_dict":	{},
+            "exp_name":	"no-teacher",
+            "first_row":	true,
+            "log_current_row":	{},
+            "log_headers":	[],
+            "output_dir":	"/home/amirhossein/Research codes/Masters Thesis/TeachDeepRL/teachDeepRL/teachDRL/data/no-teacher/no-teacher_s42",
+            "output_file":	{
+                "<_io.TextIOWrapper name='/home/amirhossein/Research codes/Masters Thesis/TeachDeepRL/teachDeepRL/teachDRL/data/no-teacher/no-teacher_s42/progress.txt' mode='w' encoding='UTF-8'>":	{
+                    "mode":	"w"
+                }
+            }
+        }
+    },
+    "logger_kwargs":	{
+        "exp_name":	"no-teacher",
+        "output_dir":	"/home/amirhossein/Research codes/Masters Thesis/TeachDeepRL/teachDeepRL/teachDRL/data/no-teacher/no-teacher_s42"
+    },
+    "max_ep_len":	2000,
+    "n_C_updates":	2,
+    "nb_test_episodes":	2,
+    "pi_lr":	0.0003,
+    "save_freq":	10,
+    "seed":	42,
+    "steps_per_epoch":	10000,
+    "train_freq":	10,
+    "train_v_iters":	80,
+    "vf_lr":	0.001
+}
