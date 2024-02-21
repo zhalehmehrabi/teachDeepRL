@@ -17,7 +17,7 @@ def param_vec_to_param_dict(param_env_bounds, param):
             param_dict[name] = param[i]
             cpt += 1
         elif len(bounds) == 3:  # third value is the number of dimensions having these bounds
-            nb_dims = bounds[2]
+            nb_dims = bounds[2] + 1
             param_dict[name] = param[i:i+nb_dims]
             cpt += nb_dims
     #print('reconstructed param vector {}\n into {}'.format(param, param_dict)) #todo remove
@@ -112,9 +112,25 @@ class TeacherController(object):
             dump_dict = self.task_generator.dump(dump_dict)
             pickle.dump(dump_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+    def hyperspherical_to_cartesian(self, angles):
+        """
+        Convert hyperspherical coordinates to Cartesian coordinates.
 
+        Parameters:
+            r (float): Radius of the hypersphere.
+            angles (list): List of angles corresponding to each dimension.
+
+        Returns:
+            numpy.array: Cartesian coordinates.
+        """
+        r = 1
+        dimensions = len(angles) + 1
+        cartesian_coords = [r * np.prod(np.sin(angles[:i])) * np.cos(angles[i]) for i in range(dimensions - 1)]
+        cartesian_coords.append(r * np.prod(np.sin(angles[:dimensions - 1])))
+        return np.array(cartesian_coords,dtype=np.float32)
     def set_env_params(self):
-        params = copy.copy(self.task_generator.sample_task())
+        params_spheral = copy.copy(self.task_generator.sample_task())
+        params = self.hyperspherical_to_cartesian(params_spheral)
         assert type(params[0]) == np.float32
         self.env_params_train.append(params)
         param_dict = param_vec_to_param_dict(self.param_env_bounds, params)

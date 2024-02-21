@@ -138,8 +138,9 @@ def main(cfg):
     #     param_env_bounds['poly_shape'] = [0, 4.0, 12]
     # if args.stump_seq:
     #     param_env_bounds['stump_seq'] = [0, 6.0, 10]
+    """ Here I change the parameters from cartesian coordinates to Spherical coordinates"""
     if cfg["nb_reward_coeff"] is not None:
-        param_env_bounds['reward_coefficients'] = [0, 1.0, cfg['nb_reward_coeff']]
+        param_env_bounds['reward_coefficients'] = [0, np.pi/2, cfg['nb_reward_coeff'] - 1]
     # Set Teacher hyperparameters
     params = {}
 
