@@ -4,7 +4,7 @@ learn:
 seed: 42
 log_dir: '/data/air_hockey/amir/logs'
 log_interval: 10 # log statistics every n episodes
-exp_name: sde_alpha100
+exp_name: ALP-GMM_for_Airhockey
 nb_reward_coeff: 4
 init_reward_coeff_mode: 'target'
 parallel: 20
