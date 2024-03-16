@@ -5,5 +5,5 @@ custom_eval:
     - joint_pos_constr
     - joint_vel_constr
     - ee_constr
-    - link_constr
+    #- link_constr
     #- constr_reward
