@@ -182,9 +182,11 @@ def main(cfg):
 
     env_init = {}
     env_init['init_reward_coeff_mode'] = cfg["init_reward_coeff_mode"]
-
-    teacher = TeacherController(teacher_args["alg"], cfg["nb_test_episodes"], param_env_bounds, cfg["env"],
-                                seed=cfg["seed"], teacher_params=params)
+    if cfg.use_teacher:
+        teacher = TeacherController(teacher_args["alg"], cfg["nb_test_episodes"], param_env_bounds, cfg["env"],
+                                    seed=cfg["seed"], teacher_params=params)
+    else:
+        teacher = None
     callback_list = get_callbacks(cfg, teacher, env_init)
 
     model = alg_cls(env=env, seed=seed, **alg_args)

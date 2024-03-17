@@ -1,24 +1,25 @@
 hydra.output_subdir: null
 learn:
   total_timesteps: 50000000
-seed: 42
+seed: 0
 log_dir: '/data/air_hockey/amir/logs'
 log_interval: 10 # log statistics every n episodes
 exp_name: ALP-GMM_for_Airhockey
-nb_reward_coeff: 4
+nb_reward_coeff: 4 # havaset be env ham bashe onja ham hast in
 init_reward_coeff_mode: 'target'
 parallel: 20
-epochs: 100
+epochs: 1000
 max_episode_len: 500
 steps_per_epoch: 50000  
 nb_test_episodes: 50
 env: air_hockey
+use_teacher: False
 defaults:
   - callbacks:
       - custom_eval
       - checkpoint
       - info_log
-      - teacher
+      #- teacher
   - algorithm:
       sac
   - environment:

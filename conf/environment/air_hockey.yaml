@@ -15,3 +15,4 @@ start_from_defend: True
 start_curriculum_transition: 10
 end_curriculum_transition: 10
 curriculum_transition: False
+nb_reward_coeff: 4 # deghat kon yeki mesl hamin to config asli hast
