@@ -8,9 +8,9 @@ exp_name: ALP-GMM_for_Airhockey
 nb_reward_coeff: 4 # havaset be env ham bashe onja ham hast in
 init_reward_coeff_mode: 'target'
 parallel: 20
-epochs: 1000
-max_episode_len: 500
-steps_per_epoch: 50000  
+epochs: 8000
+max_episode_len: 100
+steps_per_epoch: 2000  
 nb_test_episodes: 50
 env: air_hockey
 use_teacher: False

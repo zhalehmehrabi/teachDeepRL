@@ -1,11 +1,11 @@
 alg: sac
 policy: MlpPolicy
 learning_rate: 0.001
-buffer_size: 2000000
+buffer_size: 1000000
 learning_starts: 1000
-batch_size: 1000
+batch_size: 256
 tau: 0.005
-gamma: 0.997
+gamma: 0.95
 train_freq: [10, 'step'] # steps of the vectorized environment. Actual steps is train_freq * n_envs
 gradient_steps: 1
 optimize_memory_usage: false
