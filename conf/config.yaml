@@ -13,13 +13,13 @@ max_episode_len: 100
 steps_per_epoch: 2000  
 nb_test_episodes: 50
 env: air_hockey
-use_teacher: False
+use_teacher: True
 defaults:
   - callbacks:
       - custom_eval
       - checkpoint
       - info_log
-      #- teacher
+      - teacher
   - algorithm:
       sac
   - environment:
