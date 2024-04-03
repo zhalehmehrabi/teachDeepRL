@@ -181,7 +181,7 @@ def main(cfg):
         alg_args['train_freq'] = tuple(alg_args['train_freq']) # tuple is required and not list
 
     env_init = {}
-    env_init['init_reward_coeff_mode'] = cfg["init_reward_coeff_mode"]
+    # env_init['init_reward_coeff_mode'] = cfg["init_reward_coeff_mode"]
     if cfg.use_teacher:
         teacher = TeacherController(teacher_args["alg"], cfg["nb_test_episodes"], param_env_bounds, cfg["env"],
                                     seed=cfg["seed"], teacher_params=params)

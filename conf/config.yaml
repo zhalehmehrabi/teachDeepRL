@@ -5,8 +5,7 @@ seed: 0
 log_dir: '/data/air_hockey/amir/logs'
 log_interval: 10 # log statistics every n episodes
 exp_name: ALP-GMM_for_Airhockey
-nb_reward_coeff: 4 # havaset be env ham bashe onja ham hast in
-init_reward_coeff_mode: 'target'
+nb_reward_coeff: 5 # havaset be env ham bashe onja ham hast in
 parallel: 20
 epochs: 8000
 max_episode_len: 100
