@@ -6,5 +6,6 @@ info_log:
     #- ee_constr
     - success
     - unsuccess
+    - Micro Reward target
     #- link_constr
     #- constr_reward
