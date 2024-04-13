@@ -2,8 +2,8 @@ custom_eval:
   eval_freq: 1000 # calls to env.step (n_envs * eval_freq steps)
   n_eval_episodes: 20
   info_keywords:
-    - joint_pos_constr
-    - joint_vel_constr
-    - ee_constr
+    - success
+    - unsuccess
+    - Micro Reward target
     #- link_constr
     #- constr_reward
