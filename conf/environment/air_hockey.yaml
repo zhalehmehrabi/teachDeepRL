@@ -1,4 +1,4 @@
-env: 7dof-hit
+env: 7dof-defend
 shaped_reward: True
 large_reward: 2000
 large_penalty: 300
