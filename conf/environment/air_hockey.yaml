@@ -1,4 +1,4 @@
-env: 7dof-defend
+env: 7dof-hit
 shaped_reward: True
 large_reward: 2000
 large_penalty: 300
@@ -15,5 +15,5 @@ start_from_defend: True
 start_curriculum_transition: 10
 end_curriculum_transition: 10
 curriculum_transition: False
-nb_reward_coeff: 5 # deghat kon yeki mesl hamin to config asli hast
+nb_reward_coeff: 3 # deghat kon yeki mesl hamin to config asli hast
 init_reward_coeff_mode: 'target'
