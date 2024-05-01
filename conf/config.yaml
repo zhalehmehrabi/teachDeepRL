@@ -12,13 +12,13 @@ epochs: 8000
 steps_per_epoch: 2000  
 nb_test_episodes: 50
 env: air_hockey
-use_teacher: True
+use_teacher: False
 defaults:
   - callbacks:
       - custom_eval
       - checkpoint
       - info_log
-      - teacher
+#      - teacher
   - algorithm:
       sac
   - environment:

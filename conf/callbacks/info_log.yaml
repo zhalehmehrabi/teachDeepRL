@@ -7,5 +7,9 @@ info_log:
     - success
     - unsuccess
     - Micro Reward target
+    - episode_return
+    - done
+#    - fail
+#    - accomplishment
     #- link_constr
     #- constr_reward

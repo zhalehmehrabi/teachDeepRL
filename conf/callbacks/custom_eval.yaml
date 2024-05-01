@@ -5,5 +5,9 @@ custom_eval:
     - success
     - unsuccess
     - Micro Reward target
+    - episode_return
+    - done
+#    - accomplishment
+#    - fail
     #- link_constr
     #- constr_reward
