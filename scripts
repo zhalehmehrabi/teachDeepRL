@@ -5,8 +5,7 @@ without teacher ATACOM:
 python run.py parallel=20 environment.env=7dof-hit
 
 with teacher high_level:
-python run.py parallel=20 environment.env=3dof-hit +callbacks=teacher use_teacher=True environment.use_atacom=False
-environment.use_aqp=True environment.high_level_action=True
+python run.py parallel=20 environment.env=3dof-hit +callbacks=teacher use_teacher=True environment.use_atacom=False environment.use_aqp=True environment.high_level_action=True
 
 
 without teacher high_level:

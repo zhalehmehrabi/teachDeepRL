@@ -30,7 +30,8 @@ class EmpiricalALPComputer():
 
             # 3 - Compute alp as absolute difference in reward
             lp = reward - closest_previous_task_reward
-            alp = np.abs(lp)
+            # alp = np.abs(lp)
+            alp = lp # FIXME for now, I want teacher to work as LP
 
         # Add to database
         self.alp_knn.add_xy(reward, task)

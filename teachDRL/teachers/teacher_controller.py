@@ -92,7 +92,7 @@ class TeacherController(object):
         self.env_train_rewards.append(reward)
         self.env_train_len.append(ep_len)
         if self.teacher != 'Oracle':
-            reward = np.interp(reward, (-150, 350), (0, 1))
+            reward = np.interp(reward, (-300, 2000), (0, 1))
             self.env_train_norm_rewards.append(reward)
         self.task_generator.update(self.env_params_train[-1], reward)
 
