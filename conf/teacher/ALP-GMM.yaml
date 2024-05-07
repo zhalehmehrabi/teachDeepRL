@@ -6,3 +6,4 @@ max_k:
 fit_rate:
 weighted_gmm:
 alp_max_size:
+alp_buffer_size:

@@ -105,7 +105,6 @@ def main(cfg):
     env_args = cfg['environment']
     alg_args = cfg['algorithm']
     teacher_args = {key: value for key, value in cfg['teacher'].items() if value is not None}
-    print("hey")
     seed = cfg['seed'] if cfg['seed'] and cfg['seed']!=0 else random.randint(0, 999999)
 
     log_dir = create_log_directory(cfg, seed)

@@ -8,7 +8,9 @@ def proportional_choice(v, eps=0.):
     if np.sum(v) == 0 or np.random.rand() < eps:
         return np.random.randint(np.size(v))
     else:
-        probas = np.array(v) / np.sum(v)
+        minimum = np.min(v)
+        shifted_v = v + minimum
+        probas = np.array(shifted_v) / np.sum(shifted_v)
         return np.where(np.random.multinomial(1, probas) == 1)[0][0]
 
 # Absolute Learning Progress (ALP) computer object
