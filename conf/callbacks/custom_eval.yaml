@@ -5,6 +5,8 @@ custom_eval:
     - success
     - unsuccess
     - Micro Reward target
+    - Micro Reward puck-goal-distance
+    - Micro Reward EE-puck-distance
     - episode_return
     - done
 #    - accomplishment

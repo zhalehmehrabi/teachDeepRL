@@ -9,6 +9,8 @@ info_log:
     - Micro Reward target
     - episode_return
     - done
+    - Micro Reward puck-goal-distance
+    - Micro Reward EE-puck-distance
 #    - fail
 #    - accomplishment
     #- link_constr
