@@ -9,7 +9,7 @@ def proportional_choice(v, eps=0.):
         return np.random.randint(np.size(v))
     else:
         minimum = np.min(v)
-        shifted_v = v + minimum
+        shifted_v = v - minimum
         probas = np.array(shifted_v) / np.sum(shifted_v)
         return np.where(np.random.multinomial(1, probas) == 1)[0][0]
 

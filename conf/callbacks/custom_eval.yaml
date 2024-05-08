@@ -1,5 +1,5 @@
 custom_eval:
-  eval_freq: 1000 # calls to env.step (n_envs * eval_freq steps)
+  eval_freq: 10000 # calls to env.step (n_envs * eval_freq steps)
   n_eval_episodes: 20
   info_keywords:
     - success
