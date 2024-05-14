@@ -11,3 +11,10 @@ python run.py parallel=20 environment.env=3dof-hit +callbacks=teacher use_teache
 without teacher high_level:
 python run.py parallel=20 environment.env=3dof-hit environment.use_atacom=False environment.use_aqp=True environment.high_level_action=True
 
+with teacher high_level hit:
+python run.py parallel=20 environment=air_hockey_hit environment.env=3dof-hit +callbacks=teacher use_teacher=True environment.use_atacom=False environment.use_aqp=True environment.high_level_action=True
+
+
+without teacher high_level hit:
+python run.py parallel=20 environment=air_hockey_hit environment.env=3dof-hit environment.use_atacom=False environment.use_aqp=True environment.high_level_action=True
+

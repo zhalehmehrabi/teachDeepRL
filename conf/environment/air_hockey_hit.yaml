@@ -1,4 +1,4 @@
-env: 7dof-defend
+env: 7dof-hit
 shaped_reward: True
 large_reward: 2000
 large_penalty: 300
@@ -11,7 +11,7 @@ load_second_agent: False
 dont_include_timer_in_states: True
 action_persistence: 0
 stop_when_puck_otherside: False
-start_from_defend: True
+start_from_defend: False
 start_curriculum_transition: 10
 end_curriculum_transition: 10
 curriculum_transition: False
