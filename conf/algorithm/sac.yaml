@@ -6,7 +6,7 @@ learning_starts: 1000
 batch_size: 1000
 tau: 0.005
 gamma: 0.997
-train_freq: [10000, 'step'] # steps of the vectorized environment. Actual steps is train_freq * n_envs
+train_freq: [1000, 'step'] # steps of the vectorized environment. Actual steps is train_freq * n_envs
 gradient_steps: 1000
 optimize_memory_usage: false
 ent_coef: auto
