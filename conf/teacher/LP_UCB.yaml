@@ -1,0 +1,4 @@
+alg: LP-UCB
+nb_discretization: 6
+random_task_ratio: 0.1
+nb_random: 10

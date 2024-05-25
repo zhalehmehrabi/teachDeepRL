@@ -6,6 +6,8 @@ from teachDRL.teachers.algos.alp_gmm import ALPGMM
 from teachDRL.teachers.algos.covar_gmm import CovarGMM
 from teachDRL.teachers.algos.random_teacher import RandomTeacher
 from teachDRL.teachers.algos.oracle_teacher import OracleTeacher
+from teachDRL.teachers.algos.lp_ucb import LP_UCB
+from teachDRL.teachers.algos.reward_ucb import REWARD_UCB
 from teachDRL.teachers.utils.test_utils import get_test_set_name
 from collections import OrderedDict
 
@@ -66,6 +68,10 @@ class TeacherController(object):
             self.task_generator = ALPGMM(mins, maxs, seed=seed, params=teacher_params)
         elif teacher == 'Covar-GMM':
             self.task_generator = CovarGMM(mins, maxs, seed=seed, params=teacher_params)
+        elif teacher == 'LP-UCB':
+            self.task_generator = LP_UCB(mins, maxs, seed=seed, params=teacher_params)
+        elif teacher == 'REWARD-UCB':
+            self.task_generator = REWARD_UCB(mins, maxs, seed=seed, params=teacher_params)
         else:
             print('Unknown teacher')
             raise NotImplementedError
