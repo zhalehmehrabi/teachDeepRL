@@ -71,7 +71,6 @@ class REWARD_UCB():
         else:
             # taking an arm
             self.chosen_arm = self.policy.choice()
-            print(self.chosen_arm)
 
         # find the related coefficients
         new_task = self.all_combinations[self.chosen_arm]
