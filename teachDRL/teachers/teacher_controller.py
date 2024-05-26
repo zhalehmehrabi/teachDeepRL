@@ -97,7 +97,7 @@ class TeacherController(object):
     def record_train_episode(self, reward, ep_len):
         self.env_train_rewards.append(reward)
         self.env_train_len.append(ep_len)
-        if self.teacher != 'Oracle':
+        if self.teacher != 'Oracle' and self.teacher != 'REWARD-UCB' and self.teacher != 'LP-UCB':
             reward = np.interp(reward, (-300, 2000), (0, 1))
             self.env_train_norm_rewards.append(reward)
         self.task_generator.update(self.env_params_train[-1], reward)
