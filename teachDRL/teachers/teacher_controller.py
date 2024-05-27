@@ -105,10 +105,13 @@ class TeacherController(object):
                 reward = np.log1p(reward)
             reward = np.interp(reward, (-np.log(300), np.log(2000)), (0, 1))
             self.env_train_norm_rewards.append(reward)
-        else:
+        elif self.reward_scale_mode == 'linear':
             if self.teacher != 'Oracle' and self.teacher != 'REWARD-UCB' and self.teacher != 'LP-UCB':
                 reward = np.interp(reward, (-300, 2000), (0, 1))
                 self.env_train_norm_rewards.append(reward)
+        else:
+            print("not implemented yet")
+            exit(10)
         self.task_generator.update(self.env_params_train[-1], reward)
 
     def record_test_episode(self, reward, ep_len):
