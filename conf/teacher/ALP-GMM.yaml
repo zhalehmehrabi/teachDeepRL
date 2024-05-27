@@ -7,3 +7,4 @@ fit_rate: 10
 weighted_gmm:
 alp_max_size:
 alp_buffer_size:
+reward_scale_mode: 'log'

@@ -42,6 +42,7 @@ class TeacherController(object):
         self.eps= 1e-03
         self.param_env_bounds = copy.deepcopy(param_env_bounds)
         self.env_name = env_name
+        self.reward_scale_mode = teacher_params['reward_scale_mode']
         # figure out parameters boundaries vectors
         mins, maxs = [], []
         for name, bounds in param_env_bounds.items():
@@ -97,9 +98,17 @@ class TeacherController(object):
     def record_train_episode(self, reward, ep_len):
         self.env_train_rewards.append(reward)
         self.env_train_len.append(ep_len)
-        if self.teacher != 'Oracle' and self.teacher != 'REWARD-UCB' and self.teacher != 'LP-UCB':
-            reward = np.interp(reward, (-300, 2000), (0, 1))
+        if self.reward_scale_mode == 'log':
+            if reward < 0:
+                reward = -np.log1p(-reward)
+            else:
+                reward = np.log1p(reward)
+            reward = np.interp(reward, (-np.log(300), np.log(2000)), (0, 1))
             self.env_train_norm_rewards.append(reward)
+        else:
+            if self.teacher != 'Oracle' and self.teacher != 'REWARD-UCB' and self.teacher != 'LP-UCB':
+                reward = np.interp(reward, (-300, 2000), (0, 1))
+                self.env_train_norm_rewards.append(reward)
         self.task_generator.update(self.env_params_train[-1], reward)
 
     def record_test_episode(self, reward, ep_len):
