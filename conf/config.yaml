@@ -22,7 +22,7 @@ defaults:
   - algorithm:
       sac
   - environment:
-      air_hockey
+      air_hockey_hit
   - teacher:
       REWARD_UCB
 
