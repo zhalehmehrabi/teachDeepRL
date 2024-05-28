@@ -109,6 +109,8 @@ class TeacherController(object):
             if self.teacher != 'Oracle' and self.teacher != 'REWARD-UCB' and self.teacher != 'LP-UCB':
                 reward = np.interp(reward, (-300, 2000), (0, 1))
                 self.env_train_norm_rewards.append(reward)
+        elif self.reward_scale_mode == 'no_scale':
+            self.env_train_norm_rewards.append(reward)
         else:
             print("not implemented yet")
             exit(10)
