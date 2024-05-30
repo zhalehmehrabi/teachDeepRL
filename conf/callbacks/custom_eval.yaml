@@ -9,6 +9,7 @@ custom_eval:
     - Micro Reward EE-puck-distance
     - episode_return
     - done
+    - Micro Reward EE-speed
 #    - accomplishment
 #    - fail
     #- link_constr

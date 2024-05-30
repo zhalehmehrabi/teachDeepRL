@@ -11,6 +11,7 @@ info_log:
     - done
     - Micro Reward puck-goal-distance
     - Micro Reward EE-puck-distance
+    - Micro Reward EE-speed
 #    - fail
 #    - accomplishment
     #- link_constr
