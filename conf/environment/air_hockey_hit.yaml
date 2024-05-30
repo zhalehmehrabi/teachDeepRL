@@ -16,7 +16,7 @@ start_curriculum_transition: 10
 end_curriculum_transition: 10
 curriculum_transition: False
 nb_reward_coeff: 4 # deghat kon yeki mesl hamin to config asli hast
-init_reward_coeff_mode: 'same'
+init_reward_coeff_mode: 'target'
 max_episode_length: 200
 use_atacom: True
 use_aqp: False
