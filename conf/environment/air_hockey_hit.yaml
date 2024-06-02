@@ -21,4 +21,5 @@ max_episode_length: 200
 use_atacom: True
 use_aqp: False
 high_level_action: False
-min_puck_vel_norm: 0.5
+min_puck_vel_norm: 1
+hit_reward: 100
