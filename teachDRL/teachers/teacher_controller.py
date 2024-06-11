@@ -106,7 +106,7 @@ class TeacherController(object):
             reward = np.interp(reward, (-np.log(300), np.log(2000)), (0, 1))
             self.env_train_norm_rewards.append(reward)
         elif self.reward_scale_mode == 'linear':
-            if self.teacher != 'Oracle' and self.teacher != 'REWARD-UCB' and self.teacher != 'LP-UCB':
+            if self.teacher != 'Oracle':
                 reward = np.interp(reward, (-300, 2000), (0, 1))
                 self.env_train_norm_rewards.append(reward)
         elif self.reward_scale_mode == 'no_scale':
