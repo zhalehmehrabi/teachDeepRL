@@ -1,5 +1,5 @@
 alg: REWARD-UCB
-nb_discretization: 4
+nb_discretization: 3
 random_task_ratio: 0.1
 nb_random: 10
-reward_scale_mode: 'no_scale'
+reward_scale_mode: 'linear'
