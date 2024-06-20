@@ -10,7 +10,7 @@ custom_eval:
     - episode_return
     - done
     - Micro Reward EE-speed
-#    - accomplishment
+    - accomplishment
 #    - fail
     #- link_constr
     #- constr_reward
